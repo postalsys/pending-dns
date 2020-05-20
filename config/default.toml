@@ -1,0 +1,18 @@
+
+[log]
+level = "trace"
+
+[dbs]
+redis = "redis://127.0.0.1:6379/1"
+
+[api]
+enabled = true
+workers = 2
+port = 5080
+host = "127.0.0.1"
+
+[dns]
+enabled = true
+workers = 2
+port = 5053
+host = "0.0.0.0"
