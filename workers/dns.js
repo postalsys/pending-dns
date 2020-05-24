@@ -55,5 +55,8 @@ if (cluster.isMaster) {
     }
 } else {
     process.title = `postal-dns:${workerName}`;
-    require(`../lib/${workerName}-server.js`);
+    require(`../lib/${workerName}-server.js`)().catch(err => {
+        logger.error(err);
+        closeProcess(3);
+    });
 }

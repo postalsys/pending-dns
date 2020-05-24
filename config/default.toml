@@ -3,7 +3,9 @@
 level = "trace"
 
 [dbs]
-redis = "redis://127.0.0.1:6379/1"
+redis = "redis://127.0.0.1:6379/2"
+#redisRead = "redis://127.0.0.1:6379/2"
+#redisWrite = "redis://127.0.0.1:6379/2"
 
 [api]
 enabled = true
@@ -16,3 +18,22 @@ enabled = true
 workers = 2
 port = 5053
 host = "0.0.0.0"
+ttl = 300 # 5 min
+
+[[ns]]
+    domain = "ns01.pendingdns.com"
+    ip = "34.255.184.140"
+[[ns]]
+    domain = "ns02.pendingdns.com"
+    ip = "13.49.29.160"
+
+[soa]
+    admin = "hostmaster.projectpending.com"
+    serial = 2020050501
+    refresh = 3600
+    retry = 600
+    expiration = 604800
+    minimum = 60
+
+[resolver]
+    ns = ["8.8.8.8", "1.1.1.1"]
