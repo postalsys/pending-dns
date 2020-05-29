@@ -21,6 +21,7 @@ host = "0.0.0.0"
 ttl = 300 # 5 min
 
 [[ns]]
+    # first NS is also reported as the master in SOA record
     domain = "ns01.pendingdns.com"
     ip = "34.255.184.140"
 [[ns]]
