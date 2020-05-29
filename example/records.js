@@ -30,9 +30,9 @@ let main = async () => {
             ]
         ]
     ];
-    for (let [zone, sub, type, value] of createEntries) {
-        let id = await zoneStore.add(zone, sub, type, value);
-        logger.info({ msg: 'Create record', zone, sub, type, value, id });
+    for (let [zone, subdomain, type, value] of createEntries) {
+        let id = await zoneStore.add(zone, subdomain, type, value);
+        logger.info({ msg: 'Create record', zone, subdomain, type, value, id });
     }
 
     let list = await zoneStore.list('neti.ee');
