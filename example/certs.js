@@ -1,6 +1,6 @@
 'use strict';
 
-const { renewCertificate } = require('../lib/certs');
+const { getCertificate } = require('../lib/certs');
 const { zoneStore } = require('../lib/zone-store');
 
 async function main() {
@@ -9,7 +9,7 @@ async function main() {
         await zoneStore.add('mailtanker.com', '', 'A', '127.0.0.1');
     }
 
-    let cert = await renewCertificate(['mailtanker.com', '*.mailtanker.com']);
+    let cert = await getCertificate(['mailtanker.com', '*.mailtanker.com']);
 
     console.log(cert);
 }

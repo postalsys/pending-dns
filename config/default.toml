@@ -1,26 +1,48 @@
 
 [log]
-level = "trace"
+    level = "trace"
 
 [dbs]
-redis = "redis://127.0.0.1:6379/2"
-#redisRead = "redis://127.0.0.1:6379/2"
-#redisWrite = "redis://127.0.0.1:6379/2"
+
+    # By default all redis commands are sent against the same instance
+    redis = "redis://127.0.0.1:6379/2"
+
+    # Alternatively you can separate write and read tasks
+    # by writing to master and reading from a closer slave
+
+    # Redis master
+    #redisRead = "redis://127.0.0.1:6379/2"
+
+    # Redis slave, preferrably localhost for fastest responses
+    #redisWrite = "redis://127.0.0.1:6379/2"
 
 [api]
-enabled = true
-workers = 2
-port = 5080
-host = "127.0.0.1"
+    enabled = true
+    workers = 2
+
+    # You want to keep this local accessible only or firewalled otherwise
+    # anyone would be able to change DNS records
+    port = 5080
+    host = "127.0.0.1"
 
 [dns]
-enabled = true
-workers = 2
-port = 5053
-host = "127.0.0.1"
-ttl = 300 # 5 min
+    enabled = true
+    workers = 2
+
+    # Default TTL value for all records
+    ttl = 300 # 5 min
+
+    # Use 53 on production
+    port = 5053
+
+    # In most cases you have to set actual interface IP address here
+    # instead of using 0.0.0.0 as there might be already some other DNS
+    # handlers running (eg. SystemD stub resolver) on some local address
+    host = "127.0.0.1"
+    
 
 
+# List of Name Servers running this system
 [[ns]]
     # first NS is also reported as the master in SOA record
     domain = "testdns01.pendingdns.com"
@@ -29,6 +51,7 @@ ttl = 300 # 5 min
     domain = "testdns02.pendingdns.com"
     ip = "51.38.177.242"
 
+# SOA record for all zones
 [soa]
     admin = "hostmaster.pendingdns.com"
     serial = 2020050501
@@ -37,9 +60,11 @@ ttl = 300 # 5 min
     expiration = 604800
     minimum = 60
 
+# Resolver for external DNS queries, set ns=false to use system default
 [resolver]
     ns = ["8.8.8.8", "1.1.1.1"]
 
+# Settings for Let's Encrypt certificate generation
 [acme]
     # Local identifier for the ACME account
     key = "postaldns"
@@ -49,3 +74,41 @@ ttl = 300 # 5 min
     # Email address to recive account related notifications
     # This value must be set as this is the person who agrees to LE TOS
     email = ""
+
+[public]
+    enabled = true
+    server = "PostalDNS/1.0"
+    workers = 2
+    
+    [public.errors]
+        error404 = "./views/errors/404.hbs"
+        error500 = "./views/errors/500.hbs"
+
+    [public.http]
+        # URL record handling over HTTP
+        port = 6080
+        host = "0.0.0.0"
+
+    [public.https]
+        # URL record handling over HTTPS
+        port = 6443
+        host = "0.0.0.0"
+
+        # Path to default certificate files
+        # These are used only for unknown domains, so can leave as is to use self-signed certs
+        #key = "/path/to/default-privkey.pem"
+        #cert = "/path/to/default-cert.pem"
+        
+        # Path to dhparam file
+        # Generate using: openssl dhparam -out /path/to/dhparam.pem 4096
+        #dhParam = "/path/to/dhparam.pem"
+
+        # Allowed ciphers list. Leave empty for Node.js default set of ciphers
+        ciphers = "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384"
+
+    # List redirect server IP addresses here
+    # These are returned as A/AAAA query responses for the URL domain
+    # In most cases it should include the same IP addresses as the ns list
+    [public.hosts]
+        A = ["127.0.0.1", "127.0.0.2"]
+        AAAA = []

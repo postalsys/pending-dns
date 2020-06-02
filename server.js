@@ -57,6 +57,11 @@ if (config.dns.enabled) {
     spawnWorker('dns');
 }
 
+// Public HTTP/HTTPS server
+if (config.public.enabled) {
+    spawnWorker('public');
+}
+
 const closeProcess = code => {
     if (closing) {
         return;
