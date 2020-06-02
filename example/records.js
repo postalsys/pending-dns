@@ -60,8 +60,9 @@ let main = async () => {
     logger.info({ msg: 'Resolve zone', domain: 'supikas.neti.ee', zone });
 
     for (let entry of list) {
-        let deleted = await zoneStore.del(entry.id);
-        logger.info({ msg: 'Delete', key: entry.id, deleted });
+        //let deleted = await zoneStore.del(entry.id);
+        let deleted = await zoneStore.deleteDomain(entry.domain, entry.type);
+        logger.info({ msg: 'Delete', key: entry.id, domain: entry.domain, type: entry.type, deleted });
     }
 
     list = await zoneStore.list('neti.ee');

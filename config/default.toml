@@ -17,19 +17,20 @@ host = "127.0.0.1"
 enabled = true
 workers = 2
 port = 5053
-host = "0.0.0.0"
+host = "127.0.0.1"
 ttl = 300 # 5 min
+
 
 [[ns]]
     # first NS is also reported as the master in SOA record
-    domain = "ns01.pendingdns.com"
-    ip = "34.255.184.140"
+    domain = "testdns01.pendingdns.com"
+    ip = "188.165.168.22"
 [[ns]]
-    domain = "ns02.pendingdns.com"
-    ip = "13.49.29.160"
+    domain = "testdns02.pendingdns.com"
+    ip = "51.38.177.242"
 
 [soa]
-    admin = "hostmaster.projectpending.com"
+    admin = "hostmaster.pendingdns.com"
     serial = 2020050501
     refresh = 3600
     retry = 600
@@ -38,3 +39,13 @@ ttl = 300 # 5 min
 
 [resolver]
     ns = ["8.8.8.8", "1.1.1.1"]
+
+[acme]
+    # Local identifier for the ACME account
+    key = "postaldns"
+    # Defaults to Let's Encrypt staging environment
+    directoryUrl = "https://acme-staging-v02.api.letsencrypt.org/directory"
+    
+    # Email address to recive account related notifications
+    # This value must be set as this is the person who agrees to LE TOS
+    email = ""

@@ -5,9 +5,15 @@ process.title = 'postal-dns';
 // cache before wild-config
 const argv = process.argv.slice(2);
 const config = require('wild-config');
-const logger = require('./lib/logger');
+const logger = require('./lib/logger').child({ component: 'server' });
 const pathlib = require('path');
 const { Worker, SHARE_ENV } = require('worker_threads');
+const { isemail } = require('./lib/tools');
+
+if (!config.acme || !isemail(config.acme.email)) {
+    console.error('"acme.email" configuration value is not set or is not a valid email address');
+    process.exit(51);
+}
 
 let closing = false;
 

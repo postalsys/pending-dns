@@ -3,7 +3,7 @@
 'use strict';
 
 const cluster = require('cluster');
-const logger = require('../lib/logger');
+const logger = require('../lib/logger').child({ component: 'api-worker' });
 const config = require('wild-config');
 
 const workerName = 'api';
