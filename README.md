@@ -1,6 +1,6 @@
 # Postal DNS
 
-Lightweight API driven Authoritative DNS server
+Lightweight API driven Authoritative DNS server. Extracted from [Project Pending](https://projectpending.com/).
 
 ## Features
 
@@ -79,6 +79,8 @@ And the corresponding GLUE records:
 ![](https://cldup.com/mBckKqqI6W.png)
 
 Without proper setup domain registrars do not allow your name server domain names to be used.
+
+![](https://cldup.com/l0U6jc5pfM.png)
 
 ## API
 
