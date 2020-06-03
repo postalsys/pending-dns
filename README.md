@@ -4,14 +4,14 @@ Lightweight API driven Authoritative DNS server
 
 ## Features
 
--   All records can be edited over REST API
--   All changes are effective immediatelly (or as long as it takes Redis to distribute changes from master to replica instances)
--   All basic record types (A, AAAA, CNAME, TXT, MX, CAA)
--   ANAME pseudo-record for apex domains
--   URL pseudo-record for HTTP and HTTPS redirects
--   Lightweight
--   Can be geographically distributed (all writes go to central Redis master, all reads are done from local Redis replica)
--   Request certificates over API
+-   All records can be edited over **REST API**
+-   All **changes are effective immediatelly** (or as long as it takes Redis to distribute changes from master to replica instances)
+-   All **basic record types** (A, AAAA, CNAME, TXT, MX, CAA)
+-   **ANAME pseudo-record** for apex domains
+-   **URL pseudo-record** for HTTP and HTTPS redirects. Valid HTTPS certificates are generated automatically, HTTPS host gets A+ rating from SSLabs.
+-   **Lightweight**
+-   Can be **geographically distributed**. All writes go to central Redis master, all reads are done from local Redis replica
+-   Request **certificates over API**
 
 **Limitations**
 
