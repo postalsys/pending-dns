@@ -8,50 +8,56 @@
     redis = "redis://127.0.0.1:6379/2"
 
     # Alternatively you can separate write and read tasks
-    # by writing to master and reading from a closer slave
+    # by writing to master and reading from a closer replica
 
     # Redis master
     #redisRead = "redis://127.0.0.1:6379/2"
 
-    # Redis slave, preferrably localhost for fastest responses
+    # Redis replica, preferrably localhost for fastest responses
     #redisWrite = "redis://127.0.0.1:6379/2"
 
 [api]
+    # If enabled=false then API server is not started and configuration is not used
     enabled = true
     workers = 2
 
-    # You want to keep this local accessible only or firewalled otherwise
-    # anyone would be able to change DNS records
+    # You want to keep this local or firewalled otherwise anyone would be able to change DNS records
+    # Do not use ports 80 or 443 as these are needed for the redirect interface
     port = 5080
     host = "127.0.0.1"
 
 [dns]
+    # If enabled=false then DNS server is not started and configuration is not used
     enabled = true
     workers = 2
 
     # Default TTL value for all records
     ttl = 300 # 5 min
 
-    # Use 53 on production
+    # Use 53 on production.
+    # This port is used both for TCP and UDP so make sure both are allowed by the firewall
+    #    ufw allow 53/tcp
+    #    ufw allow 53/udp
     port = 5053
 
     # In most cases you have to set actual interface IP address here
     # instead of using 0.0.0.0 as there might be already some other DNS
     # handlers running (eg. SystemD stub resolver) on some local address
     host = "127.0.0.1"
-    
-
 
 # List of Name Servers running this system
+# 1) ACME certificates are created only for domains that have NS records set to these values
+# 2) These values are reported as NS records for all domains
 [[ns]]
-    # first NS is also reported as the master in SOA record
+    # First NS in the list is also reported as the master in SOA record
     domain = "testdns01.pendingdns.com"
     ip = "188.165.168.22"
 [[ns]]
     domain = "testdns02.pendingdns.com"
     ip = "51.38.177.242"
 
-# SOA record for all zones
+# SOA info
+# 1) This is reported as the SOA record for all domains
 [soa]
     admin = "hostmaster.pendingdns.com"
     serial = 2020050501
@@ -61,36 +67,47 @@
     minimum = 60
 
 # Resolver for external DNS queries, set ns=false to use system default
+# Mostly used for ANAME resolving
 [resolver]
     ns = ["8.8.8.8", "1.1.1.1"]
 
 # Settings for Let's Encrypt certificate generation
 [acme]
     # Local identifier for the ACME account
-    key = "postaldns"
+    key = "staging"
     # Defaults to Let's Encrypt staging environment
     directoryUrl = "https://acme-staging-v02.api.letsencrypt.org/directory"
     
+    #key = "production"
+    #directoryUrl = "https://acme-v02.api.letsencrypt.org/directory"
+    
     # Email address to recive account related notifications
     # This value must be set as this is the person who agrees to LE TOS
+    #email = "hostmaster@example.com"
     email = ""
 
 [public]
+    # If enabled=false then URL redirect server is not started and configuration is not used
     enabled = true
     server = "PostalDNS/1.0"
     workers = 2
     
+    # path to error files, you can use your own error pages instead of the default ones
+    # make sure though that the service user is able to read these
+    # 1) All paths are relative to working directory, eg. /opt/postal-dns
     [public.errors]
         error404 = "./views/errors/404.hbs"
         error500 = "./views/errors/500.hbs"
 
     [public.http]
         # URL record handling over HTTP
+        # Set to 80 in production
         port = 6080
         host = "0.0.0.0"
 
     [public.https]
-        # URL record handling over HTTPS
+        # URL record handling over HTTPS/HTTP2
+        # Set to 443 in production
         port = 6443
         host = "0.0.0.0"
 
@@ -108,7 +125,12 @@
 
     # List redirect server IP addresses here
     # These are returned as A/AAAA query responses for the URL domain
-    # In most cases it should include the same IP addresses as the ns list
+    # It should include the IP addresses for all servers where you have Postal DNS installed and "public.enabled=true"
     [public.hosts]
         A = ["127.0.0.1", "127.0.0.2"]
         AAAA = []
+
+[process]
+# Change user for child processes once privileged ports have been bound
+#user="www-data"
+#group="www-data"

@@ -24,12 +24,31 @@ process.on('unhandledRejection', () => closeProcess(2));
 process.on('SIGTERM', () => closeProcess(0));
 process.on('SIGINT', () => closeProcess(0));
 
+const run = () => {
+    require(`../lib/${workerName}-server.js`)()
+        .then(() => {
+            if (config.process.group) {
+                process.setgid(config.process.group);
+                logger.warn({ msg: 'Changed GID', group: config.process.group });
+            }
+
+            if (config.process.user) {
+                process.setuid(config.process.user);
+                logger.warn({ msg: 'Changed UID', user: config.process.user });
+            }
+        })
+        .catch(err => {
+            logger.error(err);
+            closeProcess(3);
+        });
+};
+
 if (cluster.isMaster) {
     logger.warn({ msg: 'Master process running', workerName });
 
-    if (config[workerName].workers === 1) {
+    if (config[workerName].workers === 1 && !config.process.user && !config.process.group) {
         // no cluster needed
-        require(`../lib/${workerName}-server.js`);
+        run();
     } else {
         const fork = () => {
             if (closing) {
@@ -55,5 +74,5 @@ if (cluster.isMaster) {
     }
 } else {
     process.title = `postal-dns:${workerName}`;
-    require(`../lib/${workerName}-server.js`);
+    run();
 }

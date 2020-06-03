@@ -27,20 +27,17 @@ Environment="NODE_ENV=production"
 
 # --- Configuration ---
 
-# Optional. Uncomment to use a system specific configuration file outside of the Postal DNS folder.
-# Configuration settings from this file are merged with default settings.
-#Environment="NODE_CONFIG_PATH=/etc/postal-dns.toml"
+# Optional. Use a system specific configuration file outside of the Postal DNS folder.
+# Configuration settings from this file are merged with default settings (docs: https://www.npmjs.com/package/wild-config)
+Environment="NODE_CONFIG_PATH=/etc/postal-dns.toml"
 
 # --- Application ---
 
 # This is the folder where Postal DNS files reside.
 
-# NB! If you are using `npx` to run the application then you can ignore this section
-# and comment out `WorkingDirectory` as npx manages code files and dependencies itself.
-
 # Normally this folder would include a clean copy from the Postal DNS Github repository + `npm install --production`.
 # To set up:
-#     git clone git://github.com/andris9/postal-dns.git
+#     git clone git://github.com/postalsys/postal-dns.git
 #     cd postal-dns
 #     npm install --production
 
@@ -50,28 +47,31 @@ Environment="NODE_ENV=production"
 # And then (as root or a user with sudo privileges):
 #    sudo systemctl restart postal-dns
 
-WorkingDirectory=/home/deployer/apps/postal-dns/
+WorkingDirectory=/opt/postal-dns/
 
 # --- Service user ---
 
-# Use non-privileged user to run the app.
-# www-data usually already exists in the system but could be any other user as well.
+# Postal DNS requires root access to bind to privileged ports (80, 53 443)
 # Make sure this user has read access to application files and, if using
-# config file at $NODE_CONFIG_PATH, then to this file as well
-User=www-data
-Group=www-data
+# config file at $NODE_CONFIG_PATH, then to this file as well.
+# You can use config values "process.user" and "process.group" to make Postal DNS
+# to downgrade user from root to something unprivileged once ports have been bound
+User=root
+Group=root
+
+# If you want to use a non-root user then enable the following line which allows
+# privileged ports for Node. You can also run this command just once manually but as
+# it is binary specific, when Node is upgraded this commands needs to be ran again.
+# Keeping it in the service file ensures that the setting is always enabled.
+# 1) Enabling this setting allows *every* node script to bind to these ports, not just Postal DNS
+# 2) Verify the paths for setcap and node, these might be different depending on the OS distribution
+#ExecStartPre=+/usr/sbin/setcap 'cap_net_bind_service=+ep' /usr/bin/node
 
 # --- Execution ---
 
 # npm location is dependent on platform.
 # Use `which npm` to resolve actual path.
 ExecStart=/usr/bin/npm start
-
-# Alternatively you can use `npx` instead of `npm`. This way you would not have to
-# manage application files or dependencies manually. For upgrading, just modify
-# application version in the following command and run `systemctl daemon-reload && systemctl restart postal-dns`
-# NB! First start after version change is going to take some time as `npx` has to install all dependencies.
-#ExecStart=/usr/bin/npx postal-dns@1.2.14
 
 Type=simple
 Restart=always
