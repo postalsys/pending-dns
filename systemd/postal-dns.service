@@ -1,0 +1,85 @@
+# Example systemd unit file for Postal DNS
+
+# Requires Node.js and Redis
+# Installation instructions for Node.js:
+#     https://nodejs.org/en/download/package-manager/
+# Install Redis on Ubuntu:
+#     https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04
+
+# Copy this file to /etc/systemd/system/postal-dns.service
+
+# Once set up (or service file is modified) run as root:
+#     systemctl daemon-reload
+#     systemctl enable postal-dns
+#     systemctl restart postal-dns
+
+[Unit]
+Description=Postal DNS
+
+# In some platforms redis could be installed as redis-server.service
+# So make sure the service name listed here is valid
+After=redis.service
+# If redis is not installed into local machine
+#After=network.target
+
+[Service]
+Environment="NODE_ENV=production"
+
+# --- Configuration ---
+
+# Optional. Uncomment to use a system specific configuration file outside of the Postal DNS folder.
+# Configuration settings from this file are merged with default settings.
+#Environment="NODE_CONFIG_PATH=/etc/postal-dns.toml"
+
+# --- Application ---
+
+# This is the folder where Postal DNS files reside.
+
+# NB! If you are using `npx` to run the application then you can ignore this section
+# and comment out `WorkingDirectory` as npx manages code files and dependencies itself.
+
+# Normally this folder would include a clean copy from the Postal DNS Github repository + `npm install --production`.
+# To set up:
+#     git clone git://github.com/andris9/postal-dns.git
+#     cd postal-dns
+#     npm install --production
+
+# If Postal DNS files are cloned from Github then an easy way to upgrade the application would look like this:
+#    git pull origin master
+#    npm install --production
+# And then (as root or a user with sudo privileges):
+#    sudo systemctl restart postal-dns
+
+WorkingDirectory=/home/deployer/apps/postal-dns/
+
+# --- Service user ---
+
+# Use non-privileged user to run the app.
+# www-data usually already exists in the system but could be any other user as well.
+# Make sure this user has read access to application files and, if using
+# config file at $NODE_CONFIG_PATH, then to this file as well
+User=www-data
+Group=www-data
+
+# --- Execution ---
+
+# npm location is dependent on platform.
+# Use `which npm` to resolve actual path.
+ExecStart=/usr/bin/npm start
+
+# Alternatively you can use `npx` instead of `npm`. This way you would not have to
+# manage application files or dependencies manually. For upgrading, just modify
+# application version in the following command and run `systemctl daemon-reload && systemctl restart postal-dns`
+# NB! First start after version change is going to take some time as `npx` has to install all dependencies.
+#ExecStart=/usr/bin/npx postal-dns@1.2.14
+
+Type=simple
+Restart=always
+RestartSec=5
+
+# --- Logging ---
+
+SyslogIdentifier=postal-dns
+
+[Install]
+WantedBy=multi-user.target
