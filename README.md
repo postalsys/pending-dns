@@ -175,6 +175,11 @@ All record types have the following properties
 -   **value** is the domain name of the provider, eg. `letsencrypt.org`
 -   **tag** is the CAA tag, eg. `issue` or `issuewild`
 
+**URL**
+
+-   **url** is the URL to redirect to. If it only has the root path set (eg. http://example.com/) then URLs are redirected with source paths (http://host/path -> http://example.com/path). Otherwise all source URLs are redirected exatly to destination URL (if url is http://example.com/some/path then http://host/path -> http://example.com/some/path)
+-   **code** is the HTTP status code to use, defaults to 301
+
 ### Modify existing Resource Record
 
 **PUT /v1/zone/{zone}/records/{record}**
