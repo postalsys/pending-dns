@@ -134,6 +134,47 @@ $ curl -X POST "http://127.0.0.1:5080/v1/zone/mailtanker.com/records" -H "Conten
 }
 ```
 
+All record types have the following properties
+
+-   **subdomain** (optional) subdomain this record applies to. If blank, or "@" or missing then the record is created for zone domain.
+-   **type** one of A, AAAA, CNAME, ANAME, URL, MX, TXT, CAA, NS
+
+#### Type specific options
+
+**A**
+
+-   **address** is an IPv4 address
+
+**AAAA**
+
+-   **address** is an IPv6 address
+
+**CNAME**
+
+-   **target** is a domain name or "@" for zone domain
+
+**ANAME**
+
+-   **target** is a domain name
+
+**TXT**
+
+-   **data** is the data string without quotes. Provide the entire value, do not chop it into substrings
+
+**MX**
+
+-   **exchange** is the domain name of the MX server
+-   **priority** is the priority number of the MX
+
+**NS**
+
+-   **ns** is the domain name of the NS server
+
+**CAA**
+
+-   **value** is the domain name of the provider, eg. `letsencrypt.org`
+-   **tag** is the CAA tag, eg. `issue` or `issuewild`
+
 ### Modify existing Resource Record
 
 **PUT /v1/zone/{zone}/records/{record}**
