@@ -1,4 +1,4 @@
-# Example systemd unit file for Postal DNS
+# Example systemd unit file for PendingDNS
 
 # Requires Node.js and Redis
 # Installation instructions for Node.js:
@@ -6,15 +6,15 @@
 # Install Redis on Ubuntu:
 #     https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04
 
-# Copy this file to /etc/systemd/system/postal-dns.service
+# Copy this file to /etc/systemd/system/pending-dns.service
 
 # Once set up (or service file is modified) run as root:
 #     systemctl daemon-reload
-#     systemctl enable postal-dns
-#     systemctl restart postal-dns
+#     systemctl enable pending-dns
+#     systemctl restart pending-dns
 
 [Unit]
-Description=Postal DNS
+Description=PendingDNS
 
 # In some platforms redis could be installed as redis-server.service
 # So make sure the service name listed here is valid
@@ -27,34 +27,34 @@ Environment="NODE_ENV=production"
 
 # --- Configuration ---
 
-# Optional. Use a system specific configuration file outside of the Postal DNS folder.
+# Optional. Use a system specific configuration file outside of the PendingDNS folder.
 # Configuration settings from this file are merged with default settings (docs: https://www.npmjs.com/package/wild-config)
-Environment="NODE_CONFIG_PATH=/etc/postal-dns.toml"
+Environment="NODE_CONFIG_PATH=/etc/pending-dns.toml"
 
 # --- Application ---
 
-# This is the folder where Postal DNS files reside.
+# This is the folder where PendingDNS files reside.
 
-# Normally this folder would include a clean copy from the Postal DNS Github repository + `npm install --production`.
+# Normally this folder would include a clean copy from the PendingDNS Github repository + `npm install --production`.
 # To set up:
-#     git clone git://github.com/postalsys/postal-dns.git
-#     cd postal-dns
+#     git clone git://github.com/postalsys/pending-dns.git
+#     cd pending-dns
 #     npm install --production
 
-# If Postal DNS files are cloned from Github then an easy way to upgrade the application would look like this:
+# If PendingDNS files are cloned from Github then an easy way to upgrade the application would look like this:
 #    git pull origin master
 #    npm install --production
 # And then (as root or a user with sudo privileges):
-#    sudo systemctl restart postal-dns
+#    sudo systemctl restart pending-dns
 
-WorkingDirectory=/opt/postal-dns/
+WorkingDirectory=/opt/pending-dns/
 
 # --- Service user ---
 
-# Postal DNS requires root access to bind to privileged ports (80, 53 443)
+# PendingDNS requires root access to bind to privileged ports (80, 53 443)
 # Make sure this user has read access to application files and, if using
 # config file at $NODE_CONFIG_PATH, then to this file as well.
-# You can use config values "process.user" and "process.group" to make Postal DNS
+# You can use config values "process.user" and "process.group" to make PendingDNS
 # to downgrade user from root to something unprivileged once ports have been bound
 User=root
 Group=root
@@ -63,7 +63,7 @@ Group=root
 # privileged ports for Node. You can also run this command just once manually but as
 # it is binary specific, when Node is upgraded this commands needs to be ran again.
 # Keeping it in the service file ensures that the setting is always enabled.
-# 1) Enabling this setting allows *every* node script to bind to these ports, not just Postal DNS
+# 1) Enabling this setting allows *every* node script to bind to these ports, not just PendingDNS
 # 2) Verify the paths for setcap and node, these might be different depending on the OS distribution
 #ExecStartPre=+/usr/sbin/setcap 'cap_net_bind_service=+ep' /usr/bin/node
 
@@ -79,7 +79,7 @@ RestartSec=5
 
 # --- Logging ---
 
-SyslogIdentifier=postal-dns
+SyslogIdentifier=pending-dns
 
 [Install]
 WantedBy=multi-user.target

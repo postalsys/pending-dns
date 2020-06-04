@@ -1,5 +1,5 @@
 {
-    "name": "postal-dns",
+    "name": "pending-dns",
     "version": "1.1.0",
     "description": "Lightweight API driven DNS server",
     "main": "index.js",
@@ -10,7 +10,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/postalsys/postal-dns.git"
+        "url": "git+https://github.com/postalsys/pending-dns.git"
     },
     "keywords": [
         "dns"
@@ -21,9 +21,9 @@
     },
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/postalsys/postal-dns/issues"
+        "url": "https://github.com/postalsys/pending-dns/issues"
     },
-    "homepage": "https://github.com/postalsys/postal-dns#readme",
+    "homepage": "https://github.com/postalsys/pending-dns#readme",
     "devDependencies": {
         "eslint": "7.1.0",
         "eslint-config-nodemailer": "1.2.0",

@@ -1,4 +1,4 @@
-# Postal DNS
+# PendingDNS
 
 Lightweight API driven Authoritative DNS server. Extracted from [Project Pending](https://projectpending.com/).
 
@@ -9,6 +9,7 @@ Lightweight API driven Authoritative DNS server. Extracted from [Project Pending
 -   All **basic record types** (A, AAAA, CNAME, TXT, MX, CAA)
 -   **ANAME pseudo-record** for apex domains
 -   **URL pseudo-record** for HTTP and HTTPS redirects. Valid HTTPS certificates are generated automatically, HTTPS host gets A+ rating from SSLabs.
+-   URL record can be turned into a **Cloudflare-like proxying** by using `proxy=true` flag. Though, while Cloudflare makes things faster then PendingDNS makes things slightly slower due to not caching anything.
 -   Periodic **health checks** to filter out unhealthy A/AAAA records
 -   **Lightweight**
 -   Can be **geographically distributed**. All writes go to central Redis master, all reads are done from local Redis replica
@@ -20,6 +21,7 @@ Lightweight API driven Authoritative DNS server. Extracted from [Project Pending
 -   Only the most basic and common record types
 -   No support for DNSSEC
 -   Only plain old DNS over UDP and TCP, no DoH, no DoT
+-   Barely tested on [Project Pending](https://projectpending.com/). Do not use this for mission critical domains. PendingDNS is only good for leftover domains, ie. for development and testing.
 
 ## Requirements
 
@@ -35,39 +37,39 @@ $ npm start
 
 ### Run as SystemD service
 
-If you want to run Postal DNS as a SystemD service, then there's an example [service file](systemd/postal-dns.service) with comments.
+If you want to run PendingDNS as a SystemD service, then there's an example [service file](systemd/pending-dns.service) with comments.
 
 #### 1. Setup commands
 
-As root run the following commands to set up PostalDNS:
+As root run the following commands to set up PendingDNS:
 
 ```
 $ cd /opt
-$ git clone git://github.com/postalsys/postal-dns.git
-$ cd postal-dns
+$ git clone git://github.com/postalsys/pending-dns.git
+$ cd pending-dns
 $ npm install --production
-$ cp systemd/postal-dns.service /etc/systemd/system
-$ cp config/default.toml /etc/postal-dns.toml
+$ cp systemd/pending-dns.service /etc/systemd/system
+$ cp config/default.toml /etc/pending-dns.toml
 ```
 
 #### 2. Configuration
 
-Next edit the configuration file `/etc/postal-dns.toml` and make sure that you have correct configuration.
+Next edit the configuration file `/etc/pending-dns.toml` and make sure that you have correct configuration.
 
-Also make sure that `/etc/systemd/system/postal-dns.service` looks correct.
+Also make sure that `/etc/systemd/system/pending-dns.service` looks correct.
 
 #### 3. Start
 
 Run the following commands as root
 
 ```
-$ systemctl enable postal-dns
-$ systemctl start postal-dns
+$ systemctl enable pending-dns
+$ systemctl start pending-dns
 ```
 
 ## General Name Server setup
 
-If you want to use Postal DNS as an authoritative DNS server for your domains then you need at least 2 instances of the server.
+If you want to use PendingDNS as an authoritative DNS server for your domains then you need at least 2 instances of the server.
 
 Additionally you need to set up both A and so-called GLUE records for the domain names of your name servers. Not all DNS providers allow to set GLUE records.
 
@@ -182,7 +184,7 @@ All record types have the following properties
 
 -   **url** (string) is the URL to redirect to. If it only has the root path set (eg. http://example.com/) then URLs are redirected with source paths (http://host/path -> http://example.com/path). Otherwise all source URLs are redirected exatly to destination URL (if url is http://example.com/some/path then http://host/path -> http://example.com/some/path)
 -   **code** (Number, default is `301`) is the HTTP status code to use. Only used if `proxy=false`
--   **proxy** (boolean, default is `false`). If true then requests are proxied to destination instead of redirecting. Mostly useful when exposing HTTP-only resources through Postal DNS HTTPS.
+-   **proxy** (boolean, default is `false`). If true then requests are proxied to destination instead of redirecting. Mostly useful when exposing HTTP-only resources through PendingDNS HTTPS.
 
 ### Modify existing Resource Record
 
@@ -228,7 +230,7 @@ This API endpoint requests a new certificate from Let's Encrypt or returns a pre
 Certificates can only be requested for domains that:
 
 1. have at least one resource record set for their zone (not important which kind)
-2. have correctly pointed NS records to your Postal DNS servers
+2. have correctly pointed NS records to your PendingDNS servers
 
 ```
 $ curl -X POST "http://127.0.0.1:5080/v1/acme" -H "Content-Type: application/json" -d '{

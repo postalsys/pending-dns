@@ -89,12 +89,12 @@
 [public]
     # If enabled=false then URL redirect server is not started and configuration is not used
     enabled = true
-    server = "PostalDNS/1.0"
+    server = "PendingDNS/1.0"
     workers = 2
     
     # path to error files, you can use your own error pages instead of the default ones
     # make sure though that the service user is able to read these
-    # 1) All paths are relative to working directory, eg. /opt/postal-dns
+    # 1) All paths are relative to working directory, eg. /opt/pending-dns
     [public.errors]
         error404 = "./views/errors/404.hbs"
         error500 = "./views/errors/500.hbs"
@@ -125,7 +125,7 @@
 
     # List redirect server IP addresses here
     # These are returned as A/AAAA query responses for the URL domain
-    # It should include the IP addresses for all servers where you have Postal DNS installed and "public.enabled=true"
+    # It should include the IP addresses for all servers where you have PendingDNS installed and "public.enabled=true"
     [public.hosts]
         A = ["127.0.0.1", "127.0.0.2"]
         AAAA = []

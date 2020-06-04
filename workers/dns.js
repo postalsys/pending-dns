@@ -73,6 +73,6 @@ if (cluster.isMaster) {
         });
     }
 } else {
-    process.title = `postal-dns:${workerName}`;
+    process.title = `pending-dns:${workerName}`;
     run();
 }

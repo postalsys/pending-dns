@@ -1,6 +1,6 @@
 'use strict';
 
-process.title = 'postal-dns';
+process.title = 'pending-dns';
 
 // cache before wild-config
 const argv = process.argv.slice(2);
