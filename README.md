@@ -5,8 +5,8 @@ Lightweight API driven Authoritative DNS server. Extracted from [Project Pending
 ## Features
 
 -   All records can be edited over **REST API**
--   All **changes are effective immediatelly** (or as long as it takes Redis to distribute changes from master to replica instances)
--   All **basic record types** (A, AAAA, CNAME, TXT, MX, CAA)
+-   All **changes are effective immediatelly** (or as long as it takes for Redis - eg. the backend for storing data - to distribute changes from master to replica instances)
+-   **Basic record types** (A, AAAA, CNAME, TXT, MX, CAA)
 -   **ANAME pseudo-record** for apex domains
 -   **URL pseudo-record** for HTTP and HTTPS redirects. Valid HTTPS certificates are generated automatically, HTTPS host gets A+ rating from SSLabs.
 -   URL record can be turned into a **Cloudflare-like proxying** by using `proxy=true` flag. Though, while Cloudflare makes things faster then PendingDNS makes things slightly slower due to not caching anything.
@@ -54,7 +54,7 @@ $ cp config/default.toml /etc/pending-dns.toml
 
 #### 2. Configuration
 
-Next edit the configuration file `/etc/pending-dns.toml` and make sure that you have correct configuration.
+Edit the configuration file `/etc/pending-dns.toml` and make sure that you have correct configuration.
 
 Also make sure that `/etc/systemd/system/pending-dns.service` looks correct.
 
@@ -69,19 +69,44 @@ $ systemctl start pending-dns
 
 ## General Name Server setup
 
+### Conflicts on port 53
+
+There might be already a recursive DNS server listening on `127.0.0.1:53` (or more commonly, SystemD stub resolver on `127.0.0.53:53`) so you can't bind your DNS server to `0.0.0.0`. Instead bind directly to your outbound interface, you can usually find these by running `ip a`.
+
+```
+$ ip a
+  …
+  inet 172.31.41.89/20 brd 172.31.47.255 scope global ens5
+  …
+```
+
+```toml
+[dns]
+  port = 53
+  host = "172.31.41.89"
+```
+
+### Glue records
+
 If you want to use PendingDNS as an authoritative DNS server for your domains then you need at least 2 instances of the server.
 
 Additionally you need to set up both A and so-called GLUE records for the domain names of your name servers. Not all DNS providers allow to set GLUE records.
 
-Here's an example how A records are set up for ns01.pendingdns.com and ns02.pendingdns.com (registrar and DNS provider for these domains is OVH):
+Here's an example how A records are set up for `ns01.pendingdns.com` and `ns02.pendingdns.com` that manage domains hosted on [Project Pending](https://projectpending.com/):
 
 ![](https://cldup.com/BYsxTUZnzP.png)
+
+> Registrar and DNS provider for these domains is OVH but you can use any registrar with GLUE support
+
+---
 
 And the corresponding GLUE records:
 
 ![](https://cldup.com/mBckKqqI6W.png)
 
-Without proper setup domain registrars do not allow your name server domain names to be used.
+---
+
+Without proper setup domain registrars do not allow your name server domain names to be used. Here's an example for a successful name server setup:
 
 ![](https://cldup.com/l0U6jc5pfM.png)
 
@@ -116,7 +141,7 @@ $ curl -X GET "http://127.0.0.1:5080/v1/zone/mailtanker.com/records"
 }
 ```
 
-**NB!** system records (NS, SOA) have id=null and these records can not be modified over API
+**NB!** system records (NS, SOA) have `id=null` and these records can not be modified over API
 
 ### Create new Resource Record
 
@@ -152,7 +177,7 @@ All record types have the following properties
 **AAAA**
 
 -   **address** is an IPv6 address
--   **healthCheck** (String) is a health check URI, either `tcps?://host:port` or `https?://host:port/path`. When doing TCP checks, successfully opened connection is considered healthy. For HTTP checks 2xx response code is considered healthy. TLS certificate is no validated, self-signed certificates are allowed.
+-   **healthCheck** (String) is a health check URI, either `tcps?://host:port` or `https?://host:port/path`. When doing TCP checks, successfully opened connection is considered healthy. For HTTP checks `2xx` response code is considered healthy. TLS certificates for https/tcps are not validated, so self-signed certificates are allowed to be used for health check hosts.
 
 **CNAME**
 
