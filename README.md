@@ -276,6 +276,11 @@ $ curl -X POST "http://127.0.0.1:5080/v1/acme" -H "Content-Type: application/jso
 }
 ```
 
+## Acknowledgments
+
+-   All DNS parsing / compiling is done using [dns2](https://www.npmjs.com/package/dns2) module by [Liu Song](https://github.com/song940)
+-   [Let's Encrypt](https://letsencrypt.org/) certificates are generated using [ACME.js](https://www.npmjs.com/package/@root/acme) module by [AJ ONeal](https://git.coolaj86.com/coolaj86)
+
 ## License
 
 **MIT**
