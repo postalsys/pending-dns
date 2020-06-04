@@ -9,6 +9,7 @@ Lightweight API driven Authoritative DNS server. Extracted from [Project Pending
 -   All **basic record types** (A, AAAA, CNAME, TXT, MX, CAA)
 -   **ANAME pseudo-record** for apex domains
 -   **URL pseudo-record** for HTTP and HTTPS redirects. Valid HTTPS certificates are generated automatically, HTTPS host gets A+ rating from SSLabs.
+-   Periodic **health checks** to filter out unhealthy A/AAAA records
 -   **Lightweight**
 -   Can be **geographically distributed**. All writes go to central Redis master, all reads are done from local Redis replica
 -   Request **certificates over API**
@@ -144,10 +145,12 @@ All record types have the following properties
 **A**
 
 -   **address** is an IPv4 address
+-   **healthCheck** (String) is a health check URI, either `tcps?://host:port` or `https?://host:port/path`. When doing TCP checks, successfully opened connection is considered healthy. For HTTP checks 2xx response code is considered healthy. TLS certificate is no validated, self-signed certificates are allowed.
 
 **AAAA**
 
 -   **address** is an IPv6 address
+-   **healthCheck** (String) is a health check URI, either `tcps?://host:port` or `https?://host:port/path`. When doing TCP checks, successfully opened connection is considered healthy. For HTTP checks 2xx response code is considered healthy. TLS certificate is no validated, self-signed certificates are allowed.
 
 **CNAME**
 
@@ -177,8 +180,9 @@ All record types have the following properties
 
 **URL**
 
--   **url** is the URL to redirect to. If it only has the root path set (eg. http://example.com/) then URLs are redirected with source paths (http://host/path -> http://example.com/path). Otherwise all source URLs are redirected exatly to destination URL (if url is http://example.com/some/path then http://host/path -> http://example.com/some/path)
--   **code** is the HTTP status code to use, defaults to 301
+-   **url** (string) is the URL to redirect to. If it only has the root path set (eg. http://example.com/) then URLs are redirected with source paths (http://host/path -> http://example.com/path). Otherwise all source URLs are redirected exatly to destination URL (if url is http://example.com/some/path then http://host/path -> http://example.com/some/path)
+-   **code** (Number, default is `301`) is the HTTP status code to use. Only used if `proxy=false`
+-   **proxy** (boolean, default is `false`). If true then requests are proxied to destination instead of redirecting. Mostly useful when exposing HTTP-only resources through Postal DNS HTTPS.
 
 ### Modify existing Resource Record
 

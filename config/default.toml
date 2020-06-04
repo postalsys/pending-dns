@@ -131,6 +131,13 @@
         AAAA = []
 
 [process]
-# Change user for child processes once privileged ports have been bound
-#user="www-data"
-#group="www-data"
+    # Change user for child processes once privileged ports have been bound
+    #user="www-data"
+    #group="www-data"
+
+[health]
+    enabled = true # If enabled=false then health checks are not performed
+    workers = 1
+    handlers = 1 # How many health checks to run in parallel
+    ttl = 30000 # Time in milliseconds until pending health check is considered failing
+    delay = 60000 # Time in milliseconds between health checks against same target

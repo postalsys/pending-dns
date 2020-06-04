@@ -62,6 +62,11 @@ if (config.public.enabled) {
     spawnWorker('public');
 }
 
+// Healthchecks
+if (config.health.enabled) {
+    spawnWorker('health');
+}
+
 const closeProcess = code => {
     if (closing) {
         return;
