@@ -1,6 +1,6 @@
 # PendingDNS
 
-Lightweight API driven Authoritative DNS server. Extracted from [Project Pending](https://projectpending.com/).
+Lightweight API driven Authoritative DNS server.
 
 ## Features
 
