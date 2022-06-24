@@ -108,3 +108,6 @@ dist
 .DS_Store
 node_modules
 licenses.csv
+
+ee-dist
+licenses.txt

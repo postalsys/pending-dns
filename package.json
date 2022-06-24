@@ -6,7 +6,9 @@
     "scripts": {
         "start": "node server.js",
         "test": "grunt",
-        "licenses": "npm-license-crawler --production --csv ./licenses.csv"
+        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
+        "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install",
+        "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt"
     },
     "repository": {
         "type": "git",
@@ -31,7 +33,7 @@
         "grunt": "1.5.3",
         "grunt-cli": "1.4.3",
         "grunt-eslint": "24.0.0",
-        "npm-license-crawler": "0.2.1"
+        "license-report": "5.0.2"
     },
     "dependencies": {
         "@fidm/x509": "1.2.1",
@@ -43,18 +45,36 @@
         "@root/acme": "3.1.0",
         "@root/csr": "0.8.1",
         "dns2": "2.0.2",
+        "handlebars": "4.7.7",
         "hapi-pino": "10.1.0",
         "hapi-swagger": "14.5.5",
         "http-proxy": "1.18.1",
         "ioredfour": "1.2.0-ioredis-06",
         "ioredis": "5.0.6",
         "ipaddr.js": "2.0.1",
+        "minimist": "^1.2.6",
         "node-rsa": "1.1.1",
         "pem-jwk": "2.0.0",
         "pino": "8.1.0",
-        "punycode": "^2.1.1",
+        "punycode": "2.1.1",
         "shortid": "2.2.16",
-        "uuid": "^8.3.2",
+        "uuid": "8.3.2",
         "wild-config": "1.6.1"
+    },
+    "bin": {
+        "pending-dns": "bin/pending-dns.js"
+    },
+    "pkg": {
+        "assets": [
+            "licenses.txt",
+            "LICENSE.txt",
+            "help.txt"
+        ],
+        "targets": [
+            "node16-linux-x64",
+            "node16-macos-x64",
+            "node16-win-x64"
+        ],
+        "outputPath": "ee-dist"
     }
 }

@@ -1,0 +1,23 @@
+pending-dns [command] [options]
+
+Lightweight API driven Authoritative DNS server.
+
+Commands:
+  pending-dns                   Run the application
+  pending-dns help              Show this information
+
+Options:
+  -h, --help     Show help 
+  
+  General options:
+  --dbs.redis               Database connection URL                      [string]
+  --log.level               Log level                 [string] [default: "trace"]
+
+  API options:
+  --api.host                Host to bind to       [string] [default: "127.0.0.1"]
+  --api.port                Port to bind to              [number] [default: 5080]
+
+  DNS options:
+  --dns.host                Host to bind to       [string] [default: "127.0.0.1"]
+  --dns.port                Port to bind to              [number] [default: 5053]
+
