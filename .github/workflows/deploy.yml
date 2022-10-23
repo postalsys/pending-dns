@@ -35,4 +35,3 @@ jobs:
                   scp /tmp/${SERVICE_NAME}.tar.gz deploy@${TARGET_HOST_02}:
                   ssh deploy@$TARGET_HOST_01 "/opt/deploy.sh ${SERVICE_NAME}"
                   ssh deploy@$TARGET_HOST_02 "/opt/deploy.sh ${SERVICE_NAME}"
-
