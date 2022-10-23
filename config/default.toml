@@ -1,143 +1,143 @@
 
 [log]
-    level = "trace"
+level = "trace"
 
 [dbs]
 
-    # By default all redis commands are sent against the same instance
-    redis = "redis://127.0.0.1:6379/2"
+# By default all redis commands are sent against the same instance
+redis = "redis://127.0.0.1:6379/2"
 
-    # Alternatively you can separate write and read tasks
-    # by writing to master and reading from a closer replica
+# Alternatively you can separate write and read tasks
+# by writing to master and reading from a closer replica
 
-    # Redis master
-    #redisRead = "redis://127.0.0.1:6379/2"
+# Redis master
+#redisRead = "redis://127.0.0.1:6379/2"
 
-    # Redis replica, preferrably localhost for fastest responses
-    #redisWrite = "redis://127.0.0.1:6379/2"
+# Redis replica, preferrably localhost for fastest responses
+#redisWrite = "redis://127.0.0.1:6379/2"
 
 [api]
-    # If enabled=false then API server is not started and configuration is not used
-    enabled = true
-    workers = 2
+# If enabled=false then API server is not started and configuration is not used
+enabled = true
+workers = 1
 
-    # You want to keep this local or firewalled otherwise anyone would be able to change DNS records
-    # Do not use ports 80 or 443 as these are needed for the redirect interface
-    port = 5080
-    host = "127.0.0.1"
+# You want to keep this local or firewalled otherwise anyone would be able to change DNS records
+# Do not use ports 80 or 443 as these are needed for the redirect interface
+port = 5080
+host = "127.0.0.1"
 
 [dns]
-    # If enabled=false then DNS server is not started and configuration is not used
-    enabled = true
-    workers = 2
+# If enabled=false then DNS server is not started and configuration is not used
+enabled = true
+workers = 2
 
-    # Default TTL value for all records
-    ttl = 300 # 5 min
+# Default TTL value for all records
+ttl = 300 # 5 min
 
-    # Use 53 on production.
-    # This port is used both for TCP and UDP so make sure both are allowed by the firewall
-    #    ufw allow 53/tcp
-    #    ufw allow 53/udp
-    port = 5053
+# Use 53 on production.
+# This port is used both for TCP and UDP so make sure both are allowed by the firewall
+#    ufw allow 53/tcp
+#    ufw allow 53/udp
+port = 5053
 
-    # In most cases you have to set actual interface IP address here
-    # instead of using 0.0.0.0 as there might be already some other DNS
-    # handlers running (eg. SystemD stub resolver) on some local address
-    host = "127.0.0.1"
+# In most cases you have to set actual interface IP address here
+# instead of using 0.0.0.0 as there might be already some other DNS
+# handlers running (eg. SystemD stub resolver) on some local address
+host = "127.0.0.1"
 
 # List of Name Servers running this system
 # 1) ACME certificates are created only for domains that have NS records set to these values
 # 2) These values are reported as NS records for all domains
 [[ns]]
-    # First NS in the list is also reported as the master in SOA record
-    domain = "testdns01.pendingdns.com"
-    ip = "188.165.168.22"
+# First NS in the list is also reported as the master in SOA record
+domain = "testdns01.pendingdns.com"
+ip = "188.165.168.22"
 [[ns]]
-    domain = "testdns02.pendingdns.com"
-    ip = "51.38.177.242"
+domain = "testdns02.pendingdns.com"
+ip = "51.38.177.242"
 
 # SOA info
 # 1) This is reported as the SOA record for all domains
 [soa]
-    admin = "hostmaster.pendingdns.com"
-    serial = 2020050501
-    refresh = 3600
-    retry = 600
-    expiration = 604800
-    minimum = 60
+admin = "hostmaster.pendingdns.com"
+serial = 2020050501
+refresh = 3600
+retry = 600
+expiration = 604800
+minimum = 60
 
 # Resolver for external DNS queries, set ns=false to use system default
 # Mostly used for ANAME resolving
 [resolver]
-    ns = ["8.8.8.8", "1.1.1.1"]
+ns = ["8.8.8.8", "1.1.1.1"]
 
 # Settings for Let's Encrypt certificate generation
 [acme]
-    # Local identifier for the ACME account
-    key = "staging"
-    # Defaults to Let's Encrypt staging environment
-    directoryUrl = "https://acme-staging-v02.api.letsencrypt.org/directory"
-    
-    #key = "production"
-    #directoryUrl = "https://acme-v02.api.letsencrypt.org/directory"
-    
-    # Email address to recive account related notifications
-    # This value must be set as this is the person who agrees to LE TOS
-    #email = "hostmaster@example.com"
-    email = ""
+# Local identifier for the ACME account
+key = "staging"
+# Defaults to Let's Encrypt staging environment
+directoryUrl = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+#key = "production"
+#directoryUrl = "https://acme-v02.api.letsencrypt.org/directory"
+
+# Email address to recive account related notifications
+# This value must be set as this is the person who agrees to LE TOS
+#email = "hostmaster@example.com"
+email = ""
 
 [public]
-    # If enabled=false then URL redirect server is not started and configuration is not used
-    enabled = true
-    server = "PendingDNS/1.0"
-    workers = 2
-    
-    # path to error files, you can use your own error pages instead of the default ones
-    # make sure though that the service user is able to read these
-    # 1) All paths are relative to working directory, eg. /opt/pending-dns
-    [public.errors]
-        error404 = "./views/errors/404.hbs"
-        error500 = "./views/errors/500.hbs"
+# If enabled=false then URL redirect server is not started and configuration is not used
+enabled = true
+server = "PendingDNS/1.0"
+workers = 2
 
-    [public.http]
-        # URL record handling over HTTP
-        # Set to 80 in production
-        port = 6080
-        host = "0.0.0.0"
+# path to error files, you can use your own error pages instead of the default ones
+# make sure though that the service user is able to read these
+# 1) All paths are relative to working directory, eg. /opt/pending-dns
+[public.errors]
+error404 = "./views/errors/404.hbs"
+error500 = "./views/errors/500.hbs"
 
-    [public.https]
-        # URL record handling over HTTPS/HTTP2
-        # Set to 443 in production
-        port = 6443
-        host = "0.0.0.0"
+[public.http]
+# URL record handling over HTTP
+# Set to 80 in production
+port = 6080
+host = "0.0.0.0"
 
-        # Path to default certificate files
-        # These are used only for unknown domains, so can leave as is to use self-signed certs
-        #key = "/path/to/default-privkey.pem"
-        #cert = "/path/to/default-cert.pem"
-        
-        # Path to dhparam file
-        # Generate using: openssl dhparam -out /path/to/dhparam.pem 4096
-        #dhParam = "/path/to/dhparam.pem"
+[public.https]
+# URL record handling over HTTPS/HTTP2
+# Set to 443 in production
+port = 6443
+host = "0.0.0.0"
 
-        # Allowed ciphers list. Leave empty for Node.js default set of ciphers
-        ciphers = "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384"
+# Path to default certificate files
+# These are used only for unknown domains, so can leave as is to use self-signed certs
+#key = "/path/to/default-privkey.pem"
+#cert = "/path/to/default-cert.pem"
 
-    # List redirect server IP addresses here
-    # These are returned as A/AAAA query responses for the URL domain
-    # It should include the IP addresses for all servers where you have PendingDNS installed and "public.enabled=true"
-    [public.hosts]
-        A = ["127.0.0.1", "127.0.0.2"]
-        AAAA = []
+# Path to dhparam file
+# Generate using: openssl dhparam -out /path/to/dhparam.pem 4096
+#dhParam = "/path/to/dhparam.pem"
+
+# Allowed ciphers list. Leave empty for Node.js default set of ciphers
+ciphers = "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384"
+
+# List redirect server IP addresses here
+# These are returned as A/AAAA query responses for the URL domain
+# It should include the IP addresses for all servers where you have PendingDNS installed and "public.enabled=true"
+[public.hosts]
+A = ["127.0.0.1", "127.0.0.2"]
+AAAA = []
 
 [process]
-    # Change user for child processes once privileged ports have been bound
-    #user="www-data"
-    #group="www-data"
+# Change user for child processes once privileged ports have been bound
+#user="www-data"
+#group="www-data"
 
 [health]
-    enabled = true # If enabled=false then health checks are not performed
-    workers = 1
-    handlers = 1 # How many health checks to run in parallel
-    ttl = 30000 # Time in milliseconds until pending health check is considered failing
-    delay = 60000 # Time in milliseconds between health checks against same target
+enabled = true # If enabled=false then health checks are not performed
+workers = 1
+handlers = 1   # How many health checks to run in parallel
+ttl = 30000    # Time in milliseconds until pending health check is considered failing
+delay = 60000  # Time in milliseconds between health checks against same target
