@@ -9,20 +9,57 @@ const config = require('wild-config');
 const workerName = 'dns';
 
 let closing = false;
-const closeProcess = code => {
+const closeProcess = (code, errType, err) => {
     if (closing) {
         return;
     }
     closing = true;
-    setTimeout(() => {
-        process.exit(code);
-    }, 10);
+
+    if (!code) {
+        return setTimeout(() => {
+            process.exit(code);
+        }, 10);
+    }
+
+    logger.fatal({
+        msg: errType,
+        _msg: errType,
+        err
+    });
+
+    if (!logger.notifyError) {
+        setTimeout(() => process.exit(code), 10);
+    }
 };
 
-process.on('uncaughtException', () => closeProcess(1));
-process.on('unhandledRejection', () => closeProcess(2));
+process.on('uncaughtException', err => closeProcess(1, 'uncaughtException', err));
+process.on('unhandledRejection', err => closeProcess(2, 'unhandledRejection', err));
 process.on('SIGTERM', () => closeProcess(0));
 process.on('SIGINT', () => closeProcess(0));
+
+const packageData = require('../package.json');
+const Bugsnag = require('@bugsnag/js');
+if (process.env.BUGSNAG_API_KEY) {
+    Bugsnag.start({
+        apiKey: process.env.BUGSNAG_API_KEY,
+        appVersion: packageData.version,
+        logger: {
+            debug(...args) {
+                logger.debug({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
+            },
+            info(...args) {
+                logger.debug({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
+            },
+            warn(...args) {
+                logger.warn({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
+            },
+            error(...args) {
+                logger.error({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
+            }
+        }
+    });
+    logger.notifyError = Bugsnag.notify.bind(Bugsnag);
+}
 
 const run = () => {
     require(`../lib/${workerName}-server.js`)()

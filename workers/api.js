@@ -9,18 +9,31 @@ const config = require('wild-config');
 const workerName = 'api';
 
 let closing = false;
-const closeProcess = code => {
+const closeProcess = (code, errType, err) => {
     if (closing) {
         return;
     }
     closing = true;
-    setTimeout(() => {
-        process.exit(code);
-    }, 10);
+
+    if (!code) {
+        return setTimeout(() => {
+            process.exit(code);
+        }, 10);
+    }
+
+    logger.fatal({
+        msg: errType,
+        _msg: errType,
+        err
+    });
+
+    if (!logger.notifyError) {
+        setTimeout(() => process.exit(code), 10);
+    }
 };
 
-process.on('uncaughtException', () => closeProcess(1));
-process.on('unhandledRejection', () => closeProcess(2));
+process.on('uncaughtException', err => closeProcess(1, 'uncaughtException', err));
+process.on('unhandledRejection', err => closeProcess(2, 'unhandledRejection', err));
 process.on('SIGTERM', () => closeProcess(0));
 process.on('SIGINT', () => closeProcess(0));
 
