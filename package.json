@@ -1,6 +1,6 @@
 {
     "name": "pending-dns",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Lightweight API driven DNS server",
     "main": "index.js",
     "scripts": {
@@ -28,26 +28,26 @@
     },
     "homepage": "https://github.com/postalsys/pending-dns#readme",
     "devDependencies": {
-        "eslint": "8.45.0",
+        "eslint": "8.47.0",
         "eslint-config-nodemailer": "1.2.0",
-        "eslint-config-prettier": "8.8.0",
+        "eslint-config-prettier": "9.0.0",
         "grunt": "1.6.1",
         "grunt-cli": "1.4.3",
         "grunt-eslint": "24.3.0",
         "license-report": "6.4.0"
     },
     "dependencies": {
-        "@bugsnag/js": "^7.20.2",
+        "@bugsnag/js": "7.21.0",
         "@fidm/x509": "1.2.1",
         "@hapi/boom": "10.0.1",
         "@hapi/hapi": "21.3.2",
         "@hapi/inert": "7.1.0",
         "@hapi/joi": "17.1.1",
-        "@hapi/vision": "7.0.2",
+        "@hapi/vision": "7.0.3",
         "@root/acme": "3.1.0",
         "@root/csr": "0.8.1",
         "dns2": "2.1.0",
-        "handlebars": "4.7.7",
+        "handlebars": "4.7.8",
         "hapi-pino": "12.1.0",
         "hapi-swagger": "17.1.0",
         "http-proxy": "1.18.1",
@@ -57,7 +57,7 @@
         "minimist": "1.2.8",
         "node-rsa": "1.1.1",
         "pem-jwk": "2.0.0",
-        "pino": "8.14.1",
+        "pino": "8.15.0",
         "punycode": "2.3.0",
         "shortid": "2.2.16",
         "uuid": "9.0.0",
@@ -73,9 +73,10 @@
             "help.txt"
         ],
         "targets": [
-            "node16-linux-x64",
-            "node16-macos-x64",
-            "node16-win-x64"
+            "node18-linux-x64",
+            "node18-macos-x64",
+            "node18-macos-arm64",
+            "node18-win-x64"
         ],
         "outputPath": "ee-dist"
     }
