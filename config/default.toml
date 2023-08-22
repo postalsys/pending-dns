@@ -66,6 +66,14 @@ retry = 600
 expiration = 604800
 minimum = 60
 
+# Text to return for chaos requests
+# Disabled by default
+[chaos]
+#"version.bind" = "PendingDNS"
+#"hostname.bind" = "forbidden.lan"
+#"id.server" = "forbidden.lan"
+#"authors.bind" = ["Andris Reinman"]
+
 # Resolver for external DNS queries, set ns=false to use system default
 # Mostly used for ANAME resolving
 [resolver]
