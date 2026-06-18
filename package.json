@@ -2,6 +2,7 @@
     "name": "pending-dns",
     "version": "1.2.5",
     "description": "Lightweight API driven DNS server",
+    "productTitle": "PendingDNS",
     "main": "index.js",
     "private": false,
     "engines": {
@@ -11,9 +12,9 @@
         "start": "node server.js",
         "lint": "eslint .",
         "test": "NODE_ENV=test node --test --test-force-exit --test-concurrency=1 test/*.test.js",
-        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
-        "build-dist-fast": "npx pkg --debug package.json && rm -rf package-lock.json && npm install",
-        "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install",
+        "build-source": "rm -rf node_modules && npm install && npm run licenses && rm -rf node_modules && npm ci --omit=dev",
+        "build-dist-fast": "pkg --debug package.json && npm install",
+        "build-dist": "pkg --compress Brotli package.json && npm install",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt",
         "update": "rm -rf node_modules package-lock.json && ncu -u && npm install"
     },
@@ -70,16 +71,22 @@
         "pending-dns": "bin/pending-dns.js"
     },
     "pkg": {
+        "scripts": [
+            "lib/**/*.js",
+            "workers/**/*.js"
+        ],
         "assets": [
+            "lib/lua/**/*",
+            "config/*.pem",
             "licenses.txt",
             "LICENSE.txt",
             "help.txt"
         ],
         "targets": [
-            "node18-linux-x64",
-            "node18-macos-x64",
-            "node18-macos-arm64",
-            "node18-win-x64"
+            "node24-linux-x64",
+            "node24-macos-x64",
+            "node24-macos-arm64",
+            "node24-win-x64"
         ],
         "outputPath": "ee-dist"
     }
