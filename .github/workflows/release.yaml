@@ -1,0 +1,43 @@
+on:
+    push:
+        branches:
+            - master
+
+permissions:
+    contents: write
+    pull-requests: write
+    id-token: write
+
+name: Manage Release
+jobs:
+    release_please:
+        name: Create or prepare release
+        runs-on: ubuntu-24.04
+        outputs:
+            major: ${{ steps.release.outputs.major }}
+            minor: ${{ steps.release.outputs.minor }}
+            patch: ${{ steps.release.outputs.patch }}
+            release_created: ${{ steps.release.outputs.release_created }}
+        steps:
+            # Uses release-please-config.json and .release-please-manifest.json
+            # from the repository root (manifest mode).
+            - uses: googleapis/release-please-action@v4
+              id: release
+
+    publish:
+        name: Publish NPM package
+        runs-on: ubuntu-24.04
+        needs: release_please
+        if: ${{ needs.release_please.outputs.release_created }}
+        permissions:
+            contents: read
+            # Required for npm provenance / OIDC trusted publishing.
+            id-token: write
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 24
+                  registry-url: "https://registry.npmjs.org"
+            - run: npm ci
+            - run: npm publish --provenance --access public

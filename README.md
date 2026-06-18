@@ -25,13 +25,13 @@ Lightweight API driven Authoritative DNS server.
 
 ## Requirements
 
--   **Node.js**, preferrably v12+
+-   **Node.js**, v18 or newer
 -   **Redis**, any version should do as only basic commands are used
 
 ## Usage
 
 ```
-$ npm install --production
+$ npm install --omit=dev
 $ npm start
 ```
 
@@ -45,9 +45,9 @@ As root run the following commands to set up PendingDNS:
 
 ```
 $ cd /opt
-$ git clone git://github.com/postalsys/pending-dns.git
+$ git clone https://github.com/postalsys/pending-dns.git
 $ cd pending-dns
-$ npm install --production
+$ npm install --omit=dev
 $ cp systemd/pending-dns.service /etc/systemd/system
 $ cp config/default.toml /etc/pending-dns.toml
 ```
@@ -109,6 +109,28 @@ And the corresponding GLUE records:
 Without proper setup domain registrars do not allow your name server domain names to be used. Here's an example for a successful name server setup:
 
 ![](https://cldup.com/l0U6jc5pfM.png)
+
+## Development
+
+Install all dependencies (including dev dependencies):
+
+```
+$ npm install
+```
+
+### Tests
+
+The test suite runs with the built-in Node.js test runner and needs a **local Redis** instance listening on `127.0.0.1:6379`. Tests use a dedicated database (`db 15`) which is flushed between runs, so it does not touch development or production data.
+
+```
+$ npm test
+```
+
+### Linting
+
+```
+$ npm run lint
+```
 
 ## API
 
@@ -203,7 +225,8 @@ All record types have the following properties
 **CAA**
 
 -   **value** is the domain name of the provider, eg. `letsencrypt.org`
--   **tag** is the CAA tag, eg. `issue` or `issuewild`
+-   **tag** is the CAA tag, one of `issue`, `issuewild` or `iodef`
+-   **flags** (Number, default is `0`) is the CAA flags octet (0-255)
 
 **URL**
 

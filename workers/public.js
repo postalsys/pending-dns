@@ -110,6 +110,6 @@ if (cluster.isMaster) {
         });
     }
 } else {
-    process.title = `postal-public:${workerName}`;
+    process.title = `pending-dns:${workerName}`;
     run();
 }

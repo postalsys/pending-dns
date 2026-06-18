@@ -36,7 +36,7 @@ function run() {
 
         case 'version':
             // Show version
-            console.log(`EmailEngine v${packageData.version} (${packageData.license})`);
+            console.log(`PendingDNS v${packageData.version} (${packageData.license})`);
             return process.exit();
 
         default:

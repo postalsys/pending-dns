@@ -1,0 +1,11 @@
+name: "PendingDNS CodeQL config"
+
+# Exclude code that is not part of the production runtime from analysis.
+# These paths generate only false-positive noise:
+#   - the test suite intentionally disables TLS verification and resolves
+#     throwaway domains
+#   - the example scripts are developer helpers, not shipped code
+paths-ignore:
+    - test
+    - '**/test/**'
+    - example

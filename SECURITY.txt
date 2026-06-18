@@ -1,0 +1,27 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Contact: https://github.com/postalsys/pending-dns/security/advisories/new
+Contact: mailto:andris@postalsys.com
+Expires: 2027-06-01T00:00:00.000Z
+Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/5D952A46E1D8C931F6364E01DC6C83F4D584D364
+Preferred-Languages: en, et
+Canonical: https://github.com/postalsys/pending-dns/blob/master/SECURITY.txt
+Policy: https://github.com/postalsys/pending-dns/blob/master/SECURITY.md
+-----BEGIN PGP SIGNATURE-----
+
+iQJPBAEBCAA5FiEEXZUqRuHYyTH2Nk4B3GyD9NWE02QFAmozqqUbFIAAAAAABAAO
+bWFudTIsMi41KzEuMTIsMCwzAAoJENxsg/TVhNNkUlUQAL8mZHOiH2ZVgsrJanW6
+58YQ5DTNfLL0CO5Qwo1j9XijmvF7dMwDsNTvQ2hDBV+Okz7mSfDBUaofgT6kIBQz
+Qk0yMyOp1Um+l4rF7/J2d/9ABBnsu4Le59Mu87qIgziLCu3YarheThiPCQvFzRfH
+A/vmGOu3/+gcHdF2GrlEk8xfFNdIqwdhuW8oTiR18WqUARe3S+wQdfumDX41gVRL
+y0Q8eGXb3j8jLXp9E21ePlPdxtIQC4fZSexd64IEKv7kuVp9vDpai0jdi5SQSmCA
+gOPp5f9jR0B6GCbRfCRYUHsrQlwOZPtCq46IGKCnrCd2wI7RHTeCUwtzOQsqod7n
+u+GE/YAZZuck9OI6oDZ3klGXUNAi5RO16ix80rybFfVA2MmNdCDHDwTmlysHli8E
+9FjakLcnF/5eH5NlH579IhQIx1exmE9Q+ZyCwaNQ2uGIujxy6bay3cxvXXeecrJM
+c0MMNgyh7CCfmHShoXfQ2JnFTlVycgqZetLySBxGzkgj5mczLKHviAjaoM3Hw2K6
+znct7z4aE0yY+tCItdIHTdPV5NxR319HZRE980h2yxt92aWmhZn/dW/4fAEwqzFU
+C6Ghu37qs9JwvyBZImH92fc9+27Xgx0Ahfb9RoXM/+TulXAdrQxcK+th9ye40GfJ
+otvIQGxzLN1kyCWhQCqusEJ4
+=QK6n
+-----END PGP SIGNATURE-----

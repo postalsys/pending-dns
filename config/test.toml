@@ -1,0 +1,25 @@
+# Configuration used by the automated test suite (NODE_ENV=test).
+# It is never loaded in production/development and keeps tests isolated
+# from real data by pointing Redis at a dedicated database that the test
+# setup is free to flush.
+
+[log]
+level = "silent"
+
+[dbs]
+# Dedicated Redis database for tests. The test bootstrap flushes this DB,
+# so it must not be shared with development (db 2) or production data.
+redis = "redis://127.0.0.1:6379/15"
+
+[acme]
+# A syntactically valid address is required for the server bootstrap check.
+email = "test@example.com"
+
+[dns]
+# Avoid clashing with a locally running instance if the DNS server is started.
+port = 15353
+host = "127.0.0.1"
+
+[api]
+port = 15080
+host = "127.0.0.1"

@@ -5,14 +5,27 @@ on:
 
 name: Deploy instance
 
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     deploy:
         name: Deploy
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
+
+            - name: Use Node.js 24
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24
 
             - name: Install SSH key
               uses: shimataro/ssh-key-action@v2
@@ -29,7 +42,7 @@ jobs:
               id: deploy
               run: |
                   echo $GITHUB_SHA > commit.txt
-                  npm install --production
+                  npm install --omit=dev
                   tar czf /tmp/${SERVICE_NAME}.tar.gz --exclude .git .
                   scp /tmp/${SERVICE_NAME}.tar.gz deploy@${TARGET_HOST_01}:
                   scp /tmp/${SERVICE_NAME}.tar.gz deploy@${TARGET_HOST_02}:
