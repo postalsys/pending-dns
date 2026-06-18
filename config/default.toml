@@ -2,6 +2,11 @@
 [log]
 level = "trace"
 
+[sentry]
+# Error reporting DSN for the self-hosted Sentry server. Leave empty to disable.
+# The production value is set via the SENTRY_DSN environment variable.
+dsn = ""
+
 [dbs]
 
 # By default all redis commands are sent against the same instance

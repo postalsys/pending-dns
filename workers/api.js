@@ -27,7 +27,7 @@ const closeProcess = (code, errType, err) => {
         err
     });
 
-    if (!logger.notifyError) {
+    if (!logger.errorReportingEnabled) {
         setTimeout(() => process.exit(code), 10);
     }
 };
@@ -36,6 +36,8 @@ process.on('uncaughtException', err => closeProcess(1, 'uncaughtException', err)
 process.on('unhandledRejection', err => closeProcess(2, 'unhandledRejection', err));
 process.on('SIGTERM', () => closeProcess(0));
 process.on('SIGINT', () => closeProcess(0));
+
+require('../lib/sentry').initSentry(workerName);
 
 const run = () => {
     require(`../lib/${workerName}-server.js`)()

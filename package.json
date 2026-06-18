@@ -43,7 +43,6 @@
         "license-report": "6.8.5"
     },
     "dependencies": {
-        "@bugsnag/js": "8.9.0",
         "@fidm/x509": "1.2.1",
         "@hapi/boom": "10.0.1",
         "@hapi/hapi": "21.4.9",
@@ -51,6 +50,7 @@
         "@hapi/vision": "7.0.3",
         "@root/acme": "3.1.0",
         "@root/csr": "0.8.1",
+        "@sentry/node": "10.57.0",
         "dns2": "3.0.0",
         "handlebars": "4.7.9",
         "hapi-pino": "13.0.0",

@@ -27,7 +27,7 @@ const closeProcess = (code, errType, err) => {
         err
     });
 
-    if (!logger.notifyError) {
+    if (!logger.errorReportingEnabled) {
         setTimeout(() => process.exit(code), 10);
     }
 };
@@ -37,30 +37,7 @@ process.on('unhandledRejection', err => closeProcess(2, 'unhandledRejection', er
 process.on('SIGTERM', () => closeProcess(0));
 process.on('SIGINT', () => closeProcess(0));
 
-const packageData = require('../package.json');
-const Bugsnag = require('@bugsnag/js');
-
-if (process.env.BUGSNAG_API_KEY) {
-    Bugsnag.start({
-        apiKey: process.env.BUGSNAG_API_KEY,
-        appVersion: packageData.version,
-        logger: {
-            debug(...args) {
-                logger.debug({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
-            },
-            info(...args) {
-                logger.debug({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
-            },
-            warn(...args) {
-                logger.warn({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
-            },
-            error(...args) {
-                logger.error({ msg: args.shift(), worker: workerName, source: 'bugsnag', args: args.length ? args : undefined });
-            }
-        }
-    });
-    logger.notifyError = Bugsnag.notify.bind(Bugsnag);
-}
+require('../lib/sentry').initSentry(workerName);
 
 const run = () => {
     require(`../lib/${workerName}-worker.js`)()

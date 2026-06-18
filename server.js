@@ -7,7 +7,6 @@ const argv = process.argv.slice(2);
 const config = require('wild-config');
 const logger = require('./lib/logger').child({ component: 'server' });
 const pathlib = require('path');
-const packageData = require('./package.json');
 const { Worker, SHARE_ENV } = require('worker_threads');
 const { isemail } = require('./lib/tools');
 
@@ -16,28 +15,7 @@ if (!config.acme || !isemail(config.acme.email)) {
     process.exit(51);
 }
 
-const Bugsnag = require('@bugsnag/js');
-if (process.env.BUGSNAG_API_KEY) {
-    Bugsnag.start({
-        apiKey: process.env.BUGSNAG_API_KEY,
-        appVersion: packageData.version,
-        logger: {
-            debug(...args) {
-                logger.debug({ msg: args.shift(), worker: 'main', source: 'bugsnag', args: args.length ? args : undefined });
-            },
-            info(...args) {
-                logger.debug({ msg: args.shift(), worker: 'main', source: 'bugsnag', args: args.length ? args : undefined });
-            },
-            warn(...args) {
-                logger.warn({ msg: args.shift(), worker: 'main', source: 'bugsnag', args: args.length ? args : undefined });
-            },
-            error(...args) {
-                logger.error({ msg: args.shift(), worker: 'main', source: 'bugsnag', args: args.length ? args : undefined });
-            }
-        }
-    });
-    logger.notifyError = Bugsnag.notify.bind(Bugsnag);
-}
+require('./lib/sentry').initSentry('main');
 
 let closing = false;
 
@@ -109,7 +87,10 @@ const closeProcess = (code, errType, err) => {
         err
     });
 
-    if (!logger.notifyError) {
+    if (!logger.errorReportingEnabled) {
+        // No external reporter is handling the crash, so exit here and let the
+        // supervisor restart us. When Sentry is enabled its crash integration
+        // captures, flushes and exits instead.
         setTimeout(() => process.exit(code), 10);
     }
 };
