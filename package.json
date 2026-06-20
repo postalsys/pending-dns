@@ -11,6 +11,8 @@
     "scripts": {
         "start": "node server.js",
         "lint": "eslint .",
+        "format": "prettier --write 'lib/**/*.js' 'workers/**/*.js' 'test/**/*.js' '*.js'",
+        "format:check": "prettier --check 'lib/**/*.js' 'workers/**/*.js' 'test/**/*.js' '*.js'",
         "test": "NODE_ENV=test node --test --test-force-exit --test-concurrency=1 test/*.test.js",
         "build-source": "rm -rf node_modules && npm install && npm run licenses && rm -rf node_modules && npm ci --omit=dev",
         "build-dist-fast": "pkg --debug package.json && npm install",
@@ -40,7 +42,8 @@
         "eslint": "9.39.4",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "10.1.8",
-        "license-report": "6.8.5"
+        "license-report": "6.8.5",
+        "prettier": "3.8.4"
     },
     "dependencies": {
         "@fidm/x509": "1.2.1",

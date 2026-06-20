@@ -12,7 +12,9 @@ const isTestDatabase = () => /\/15(\?|$)/.test((config.dbs.redis || '').toString
 // db 15 to avoid wiping development (db 2) or production data by accident.
 const flushTestDb = async () => {
     if (!isTestDatabase()) {
-        throw new Error(`Refusing to flush Redis: expected the test database (db 15) but config points at "${config.dbs.redis}". Run tests with NODE_ENV=test.`);
+        throw new Error(
+            `Refusing to flush Redis: expected the test database (db 15) but config points at "${config.dbs.redis}". Run tests with NODE_ENV=test.`
+        );
     }
     await db.redisWrite.flushdb();
 };
