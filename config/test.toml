@@ -23,3 +23,13 @@ host = "127.0.0.1"
 [api]
 port = 15080
 host = "127.0.0.1"
+
+[dnssec]
+# Enable the global DNSSEC master switch so the signing tests exercise the
+# query-time signing path (per-zone signing is still gated on a generated key).
+enabled = true
+
+# Disable the in-memory signer cache in tests so each case reads fresh state from
+# Redis (db 15 is flushed between cases); the cache itself is covered by a
+# dedicated test that sets a positive TTL.
+signerCacheTtl = 0

@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { createServer } = require('../lib/api-server');
-const { flushTestDb, closeDb } = require('./helpers');
+const { config, flushTestDb, closeDb } = require('./helpers');
 
 let server;
 
@@ -90,6 +90,44 @@ test('POST creates a CAA record and stores its tag', async () => {
     assert.equal(caa.tag, 'issue');
 });
 
+test('POST creates a TLSA record with an underscore-labelled subdomain', async () => {
+    const certHex = '92003ba34942dc74152e2f2c408d29eca5a520e7f2e06bb944f4dca346baf63c';
+    const create = await inject({
+        method: 'POST',
+        url: '/v1/zone/example.com/records',
+        payload: { subdomain: '_443._tcp.www', type: 'TLSA', usage: 3, selector: 1, matchingType: 1, certificate: certHex }
+    });
+    assert.equal(create.statusCode, 200, `expected TLSA create to succeed, got ${create.payload}`);
+
+    const res = await inject({ method: 'GET', url: '/v1/zone/example.com/records' });
+    const body = JSON.parse(res.payload);
+    const tlsa = body.records.find(r => r.type === 'TLSA' && r.id);
+    assert.ok(tlsa, 'TLSA record should be listed');
+    assert.equal(tlsa.subdomain, '_443._tcp.www');
+    assert.equal(tlsa.usage, 3);
+    assert.equal(tlsa.selector, 1);
+    assert.equal(tlsa.matchingType, 1);
+    assert.equal(tlsa.certificate, certHex);
+});
+
+test('POST rejects a TLSA record with odd-length hex', async () => {
+    const res = await inject({
+        method: 'POST',
+        url: '/v1/zone/example.com/records',
+        payload: { subdomain: '_443._tcp.www', type: 'TLSA', usage: 3, selector: 1, matchingType: 1, certificate: 'abc' }
+    });
+    assert.equal(res.statusCode, 400);
+});
+
+test('POST rejects TLSA-only fields on a non-TLSA record type', async () => {
+    const res = await inject({
+        method: 'POST',
+        url: '/v1/zone/example.com/records',
+        payload: { subdomain: '', type: 'A', address: '1.2.3.4', usage: 3, certificate: 'abcd' }
+    });
+    assert.equal(res.statusCode, 400);
+});
+
 test('PUT updates a record and echoes back the record id', async () => {
     const create = await inject({
         method: 'POST',
@@ -124,6 +162,60 @@ test('DELETE removes a record', async () => {
 
     const res = await inject({ method: 'GET', url: '/v1/zone/example.com/records' });
     assert.deepEqual(JSON.parse(res.payload).records, []);
+});
+
+test('DNSSEC can be enabled, inspected and disabled over the API', async () => {
+    const enable = await inject({ method: 'POST', url: '/v1/zone/example.com/dnssec', payload: { algorithm: 13 } });
+    assert.equal(enable.statusCode, 200, `expected enable to succeed, got ${enable.payload}`);
+    const enabled = JSON.parse(enable.payload);
+    assert.equal(enabled.enabled, true);
+    assert.ok(enabled.ds.length >= 1 && enabled.ds[0].presentation, 'DS presentation should be returned');
+
+    const status = await inject({ method: 'GET', url: '/v1/zone/example.com/dnssec' });
+    assert.equal(status.statusCode, 200);
+    assert.equal(JSON.parse(status.payload).enabled, true);
+
+    const disable = await inject({ method: 'DELETE', url: '/v1/zone/example.com/dnssec' });
+    assert.equal(disable.statusCode, 200);
+    assert.equal(JSON.parse(disable.payload).disabled, true);
+
+    const after = await inject({ method: 'GET', url: '/v1/zone/example.com/dnssec' });
+    assert.equal(JSON.parse(after.payload).enabled, false);
+});
+
+test('DNSSEC algorithm rollover and key removal over the API', async () => {
+    const enable = JSON.parse((await inject({ method: 'POST', url: '/v1/zone/example.com/dnssec', payload: { algorithm: 13 } })).payload);
+    const oldKeyTag = enable.keyTag;
+
+    // Re-enable with a new algorithm -> rollover keeps both keys.
+    const rolled = await inject({ method: 'POST', url: '/v1/zone/example.com/dnssec', payload: { algorithm: 15 } });
+    const rolledBody = JSON.parse(rolled.payload);
+    assert.equal(rolledBody.algorithm, 15);
+    assert.equal(rolledBody.ds.length, 2, 'both keys are published during the rollover');
+    assert.notEqual(rolledBody.keyTag, oldKeyTag);
+
+    // The active key cannot be removed.
+    const refuse = await inject({ method: 'DELETE', url: `/v1/zone/example.com/dnssec/key/${rolledBody.keyTag}` });
+    assert.equal(refuse.statusCode, 400);
+
+    // Removing the old key finishes the rollover.
+    const remove = await inject({ method: 'DELETE', url: `/v1/zone/example.com/dnssec/key/${oldKeyTag}` });
+    assert.equal(remove.statusCode, 200);
+    assert.equal(JSON.parse(remove.payload).removed, true);
+
+    const final = JSON.parse((await inject({ method: 'GET', url: '/v1/zone/example.com/dnssec' })).payload);
+    assert.equal(final.ds.length, 1);
+    assert.equal(final.keyTag, rolledBody.keyTag);
+});
+
+test('POST /dnssec is refused (400) when DNSSEC is globally disabled', async () => {
+    config.dnssec.enabled = false;
+    try {
+        const res = await inject({ method: 'POST', url: '/v1/zone/example.com/dnssec', payload: { algorithm: 13 } });
+        assert.equal(res.statusCode, 400, `expected 400, got ${res.statusCode}: ${res.payload}`);
+    } finally {
+        config.dnssec.enabled = true;
+    }
 });
 
 test('POST /v1/acme requires at least one domain', async () => {

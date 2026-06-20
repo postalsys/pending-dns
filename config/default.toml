@@ -143,6 +143,44 @@ ciphers = "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES25
 A = ["127.0.0.1", "127.0.0.2"]
 AAAA = []
 
+[dnssec]
+# Master switch. Per-zone signing is additionally gated on a generated key:
+# a zone is only signed once DNSSEC has been enabled for it over the API.
+enabled = false
+
+# Default algorithm for newly generated zone keys.
+#   13 = ECDSA P-256 / SHA-256 (recommended)
+#   15 = Ed25519
+#    8 = RSASHA256
+algorithm = 13
+
+# RRSIG validity window (seconds) and how far inception is backdated to absorb
+# validator clock skew.
+signatureValidity = 604800 # 7 days
+inceptionSkew = 3600       # backdate inception 1h
+
+# TTL for the DNSKEY RRset. (Synthesized NSEC records use the SOA minimum so the
+# denial proof and the negative answer expire together, per RFC 2308.)
+dnskeyTtl = 3600
+
+# How long (seconds) a per-zone signer (and the "unsigned" verdict for a zone) is
+# cached in memory on the DNS workers, to avoid re-reading and re-parsing zone
+# keys on every DO query. The API and DNS subsystems run as separate workers, so
+# a key change made over the API takes effect on the DNS side after at most this
+# long. Set to 0 to disable the cache. Keep small - DNSSEC key changes are rare.
+signerCacheTtl = 5
+
+# Denial of existence: nonexistent or empty names are answered NODATA (NOERROR)
+# with a signed compact NSEC ("black lies"). True NXDOMAIN is not used because the
+# server synthesizes CAA/NS/SOA for any name, so to a validator no name is truly
+# absent.
+
+# Advertised EDNS UDP payload size, and the cap on outgoing UDP responses: a
+# response larger than the smaller of this and the requestor's advertised size is
+# truncated with TC=1 so the client retries over TCP. 1232 avoids IP fragmentation
+# on most paths.
+udpPayloadSize = 1232
+
 [process]
 # Change user for child processes once privileged ports have been bound
 #user="www-data"

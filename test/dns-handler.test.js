@@ -46,7 +46,10 @@ test('shuffle returns the same elements (a permutation)', () => {
     const input = [1, 2, 3, 4, 5, 6, 7, 8];
     const out = shuffle(input.slice());
     assert.equal(out.length, input.length);
-    assert.deepEqual(out.slice().sort((a, b) => a - b), input);
+    assert.deepEqual(
+        out.slice().sort((a, b) => a - b),
+        input
+    );
 });
 
 test('filterUnhealthy drops unhealthy entries when at least one is healthy', () => {
@@ -104,6 +107,14 @@ test('dnsHandler returns configured NS records when none are stored', async () =
     assert.ok(nsAnswers.length >= 1, 'should fall back to configured name servers');
 });
 
+test('dnsHandler does not synthesise NS below the apex', async () => {
+    await flushTestDb();
+    // Adding any record registers the example.com zone.
+    await zoneStore.add('example.com', 'www', 'A', ['1.2.3.4']);
+    const response = await dnsHandler(buildRequest('sub.example.com', 'NS'));
+    assert.ok(!response.answers.some(a => a.type === Packet.TYPE.NS), 'a record-less below-apex name is not a delegation, so no NS is synthesised');
+});
+
 test('dnsHandler synthesises a SOA record', async () => {
     await flushTestDb();
     const response = await dnsHandler(buildRequest('example.com', 'SOA'));
@@ -125,6 +136,26 @@ test('dnsHandler filters unhealthy AAAA records', async () => {
     const response = await dnsHandler(buildRequest('example.com', 'AAAA'));
     const aaaa = response.answers.filter(a => a.type === Packet.TYPE.AAAA);
     assert.equal(aaaa.length, 1, 'the unhealthy AAAA record should be filtered out');
+});
+
+test('dnsHandler answers a TLSA query with raw RDATA that round-trips on the wire', async () => {
+    await flushTestDb();
+    const certHex = '92003ba34942dc74152e2f2c408d29eca5a520e7f2e06bb944f4dca346baf63c';
+    await zoneStore.add('example.com', '_443._tcp.www', 'TLSA', [3, 1, 1, certHex]);
+
+    const req = new Packet({});
+    req.questions = [{ name: '_443._tcp.www.example.com', type: 52, class: Packet.CLASS.IN }];
+    req.source = { type: 'udp', address: '127.0.0.1', port: 5353 };
+
+    const response = await dnsHandler(req);
+    const tlsa = response.answers.find(a => a.type === 52);
+    assert.ok(tlsa, 'a TLSA answer should be returned');
+
+    // Serialize then reparse to confirm dns2 carries the raw RDATA intact.
+    const reparsed = Packet.parse(response.toBuffer());
+    const rr = reparsed.answers.find(a => a.type === 52);
+    assert.ok(rr, 'TLSA record survives wire serialization');
+    assert.equal(rr.data.toString('hex'), `030101${certHex}`);
 });
 
 test('dnsHandler resolves CNAME chains', async () => {

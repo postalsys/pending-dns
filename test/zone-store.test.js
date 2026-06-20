@@ -19,8 +19,44 @@ test.beforeEach(async () => {
 // ---------------------------------------------------------------------------
 
 test('module exports the allowed record types and CAA tags', () => {
-    assert.deepEqual(allowedTypes, ['A', 'AAAA', 'ANAME', 'CNAME', 'MX', 'TXT', 'CAA', 'URL', 'NS']);
+    assert.deepEqual(allowedTypes, ['A', 'AAAA', 'ANAME', 'CNAME', 'MX', 'TXT', 'CAA', 'TLSA', 'URL', 'NS']);
     assert.deepEqual(allowedTags, ['issue', 'issuewild', 'iodef']);
+});
+
+test('add rejects a TLSA record whose certificate is not even-length hex', async () => {
+    assert.equal(await zoneStore.add('example.com', '_25._tcp', 'TLSA', [3, 1, 1, 'abc']), false, 'odd-length hex');
+    assert.equal(await zoneStore.add('example.com', '_25._tcp', 'TLSA', [3, 1, 1, 'xyz0']), false, 'non-hex');
+});
+
+test('add stores a TLSA record with even-length hex', async () => {
+    assert.ok(await zoneStore.add('example.com', '_25._tcp', 'TLSA', [3, 1, 1, 'aabb']), 'even-length hex is accepted');
+});
+
+test('update rejects a non-even-length-hex TLSA on the unchanged name/type path', async () => {
+    const id = await zoneStore.add('example.com', '_25._tcp', 'TLSA', [3, 1, 1, 'aabb']);
+    assert.ok(id, 'baseline TLSA stored');
+
+    // Same subdomain + type (the direct-hset path, not the delete+add path) with an
+    // odd-length cert must be refused, mirroring the guard in add().
+    const res = await zoneStore.update('example.com', id, '_25._tcp', 'TLSA', [3, 1, 1, 'abc']);
+    assert.equal(res, false, 'odd-length hex is rejected on the update unchanged path');
+
+    const tlsa = (await zoneStore.list('example.com')).find(r => r.type === 'TLSA');
+    assert.ok(tlsa, 'the TLSA record still exists');
+    assert.equal(tlsa.value[3], 'aabb', 'the original certificate is preserved');
+});
+
+test('existingTypes folds in single-level wildcard types when asked', async () => {
+    await zoneStore.add('example.com', '*', 'A', ['1.2.3.4']);
+    await zoneStore.add('example.com', 'foo', 'TXT', ['hi']);
+
+    const union = await zoneStore.existingTypes('foo.example.com', true);
+    assert.ok(union.includes('A'), 'wildcard-supplied A is included');
+    assert.ok(union.includes('TXT'), 'exact TXT at the name is included');
+    assert.ok(!union.includes('AAAA'), 'AAAA is supplied by neither');
+
+    const exact = await zoneStore.existingTypes('foo.example.com');
+    assert.ok(exact.includes('TXT') && !exact.includes('A'), 'exact-only excludes the wildcard A');
 });
 
 test('getFullId / parseFullId round-trip', () => {

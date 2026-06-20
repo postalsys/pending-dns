@@ -57,7 +57,7 @@ Config is loaded by `wild-config` from `config/default.toml` merged with `config
 This is the heart of the system and is non-obvious:
 
 - **Domain names are stored label-reversed**: `www.example.com` → `com.example.www` (`domainToName`/`nameToDomain`). This lets `resolveZone` walk *up* from a name to its registered zone by progressively dropping the most-specific label. A "zone" is any name with a `d:<name>:z` set; the shortest possible zone is the 2-label boundary (e.g. `example.com`).
-- Keys: `d:<name>:z` is a **set of record keys** belonging to that zone; `d:<name>:r:<TYPE>` is a **hash** of `hid → JSON.stringify(valueArray)`. Each record's value is a positional array whose meaning depends on type (e.g. A = `[address, healthCheckUri]`, MX = `[exchange, priority]`, CAA = `[value, tag, flags]`, URL = `[url, code, proxy]`).
+- Keys: `d:<name>:z` is a **set of record keys** belonging to that zone; `d:<name>:r:<TYPE>` is a **hash** of `hid → JSON.stringify(valueArray)`. Each record's value is a positional array whose meaning depends on type (e.g. A = `[address, healthCheckUri]`, MX = `[exchange, priority]`, CAA = `[value, tag, flags]`, TLSA = `[usage, selector, matchingType, certificate]`, URL = `[url, code, proxy]`).
 - A record's public **ID is `base64url(name \x01 TYPE \x01 hid)`** (`getFullId`/`parseFullId`); `hid` is a `nanoid()`. IDs are opaque and stable only while domain+type are unchanged (an `update` that changes either deletes and re-adds, producing a new ID).
 - **Wildcards** are single-label: a record stored under subdomain `*.foo` matches `anything.foo.<zone>` only (`resolve` retries with the last label replaced by `*`).
 - **Read/write split**: reads go to `db.redisRead`, writes to `db.redisWrite` (configurable as separate master/replica URLs). The health-check Lua script `lib/lua/health.lua` is registered as a custom command `nextHealth` on the write client.
@@ -70,13 +70,25 @@ This is the heart of the system and is non-obvious:
 
 Two pseudo-record types: **ANAME** (apex alias) is resolved to real A/AAAA at query time via `lib/cached-resolver.js` (a Redis-cached wrapper over Node's `dns.Resolver`, with soft/hard TTLs for both hits and errors). **URL** records answer A/AAAA with the redirect server IPs from `config.public.hosts`; the actual redirect/proxy happens in `lib/public-server.js`.
 
+### DNSSEC online signing (`lib/dnssec.js`, `lib/dnssec-wire.js`)
+
+DNSSEC is **online (query-time) signing**, gated on `[dnssec] enabled` AND a per-zone key AND the client's EDNS **DO** bit. `lib/dnssec-wire.js` is a pure, dependency-free (only `crypto` + `ipaddr.js`) wire/crypto layer: canonical RDATA/name encoding (RFC 4034 6.2), the `ALGS` table for algorithms 8/13/15, key-tag + DS-digest computation, NSEC bitmaps, and RRSIG encoding. **Invariant:** signatures are computed over the canonical uncompressed lowercased wire form produced here, never over dns2's serialization (validators decompress + downcase before verifying, so the two agree).
+
+`lib/dnssec.js` owns per-zone keys and signing orchestration. Keys live in Redis: `d:dnssec:<revname>` is the state hash (`enabled`, `algorithm`, `activeKeyTag`) and `d:dnssec:<revname>:keys` is a hash of `hid → JSON` (private key PEM + public material). A zone has one **CSK** per algorithm; an algorithm rollover keeps both and signs with every algorithm (RFC 6840 5.11) until `removeKey`. `getSigner` assembles + caches the signer per process (short `signerCacheTtl`, since API and DNS run as separate workers); `enableZone`/`removeKey`/`disableZone` mutate under a shared Redis lock (`lib/lock.js`) and invalidate the cache.
+
+The query-time path is `lib/dns-handler.js#signResponse` (DO queries only): it serves+self-signs DNSKEY at the apex, signs each in-zone RRset (`signSection`, but never a below-apex delegation NS — RFC 4035 2.2), and proves denial-of-existence as **NODATA (NOERROR) "black lies"** — a signed SOA + a compact NSEC at the queried name (`bitmapTypeNums`/`nsecRecord`), never NXDOMAIN or NSEC3, because the server synthesizes CAA/SOA for any name. The NSEC bitmap lists only **answerable** types and must exclude the queried-absent type (e.g. a `URL` record only advertises the `config.public.hosts` families) or a validator SERVFAILs. The API (`lib/api-server.js`) exposes `GET/POST/DELETE /v1/zone/{zone}/dnssec` and `DELETE .../dnssec/key/{keyTag}`.
+
+**TLSA** records are stored as `[usage, selector, matchingType, certificate]` (even-length hex, guarded in the API Joi schema, the store's `add`/`update`, and `encodeTLSARdata`). dns2 has no TLSA/RRSIG/NSEC/DS encoder, so those are emitted as `{ type:<num>, data:<Buffer> }` and routed through dns2's raw-RDATA (RFC 3597) fallback; `dns-handler.js` merges `wire.EXTRA_TYPES` into its type maps to recognize them.
+
+**EDNS / truncation** (`lib/dns-server.js`): `parseEdns` reads the OPT (DO bit + advertised payload size); `finalizeResponse` replaces the additional section with our own OPT and, for UDP, truncates with TC=1 above the smaller of the requestor's advertised size and our configured `udpPayloadSize` (anti-fragmentation), so the client retries over TCP.
+
 ### Certificates & the public server
 
-`lib/certs.js` issues Let's Encrypt certs via the **dns-01** challenge, using the zone store itself as the ACME DNS provider (it writes/reads the `_acme-challenge` TXT records). Concurrent issuance is guarded with an `ioredfour` Redis lock; results and a per-domain renewal lock are cached in Redis. `lib/public-server.js` uses an SNI callback to load the right cert per hostname (falling back to a bundled self-signed cert in `config/`), then serves URL-record redirects or reverse-proxies (`proxy=true`), with TLS session tickets stored in Redis.
+`lib/certs.js` issues Let's Encrypt certs via the **dns-01** challenge, using the zone store itself as the ACME DNS provider (it writes/reads the `_acme-challenge` TXT records). Concurrent issuance is guarded with an `ioredfour` Redis lock (the shared `lib/lock.js`, also used by DNSSEC key management; callers namespace their own lock keys); results and a per-domain renewal lock are cached in Redis. `lib/public-server.js` uses an SNI callback to load the right cert per hostname (falling back to a bundled self-signed cert in `config/`), then serves URL-record redirects or reverse-proxies (`proxy=true`), with TLS session tickets stored in Redis.
 
 ### Testability seams
 
-Production code exposes hooks used only by tests: `lib/api-server.js` exports `createServer()` (build the Hapi server without `start()`, for `server.inject()`); `lib/dns-server.js`'s `init()` awaits binding and returns `{ udpServer, tcpServer }`; `lib/dns-handler.js` and `lib/certs.js` attach a `.testables` object to their exported function.
+Production code exposes hooks used only by tests: `lib/api-server.js` exports `createServer()` (build the Hapi server without `start()`, for `server.inject()`); `lib/dns-server.js`'s `init()` awaits binding and returns `{ udpServer, tcpServer }`, and also attaches `.testables` (`parseEdns`, `finalizeResponse`); `lib/dns-handler.js` (`signResponse`, `bitmapTypeNums`, `processQuestion`, ...), `lib/certs.js`, and `lib/dnssec.js` attach a `.testables` object. `lib/dnssec-wire.js` is pure and is tested directly.
 
 ## CI / release
 
