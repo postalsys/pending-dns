@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/postalsys/pending-dns/compare/v1.4.0...v1.4.1) (2026-06-20)
+
+
+### Bug Fixes
+
+* trigger standalone pkg build rebuild ([6484e02](https://github.com/postalsys/pending-dns/commit/6484e027edf7cb890e61379e677eba71561f09d6))
+
 ## [1.4.0](https://github.com/postalsys/pending-dns/compare/v1.3.0...v1.4.0) (2026-06-20)
 
 
