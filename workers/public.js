@@ -40,7 +40,7 @@ process.on('SIGINT', () => closeProcess(0));
 require('../lib/sentry').initSentry(workerName);
 
 const run = () => {
-    require(`../lib/${workerName}-server.js`)()
+    require('../lib/public-server.js')()
         .then(() => {
             if (config.process.group) {
                 process.setgid(config.process.group);
