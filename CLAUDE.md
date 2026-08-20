@@ -41,7 +41,7 @@ Because workers are loaded through **dynamic `require()` / `worker_threads`** (s
 
 `server.js` is the supervisor. For each enabled subsystem (`api`, `dns`, `public`, `health`) it spawns a **worker thread** running `workers/<type>.js`, and restarts it on exit. Each `workers/<type>.js` is itself a small bootstrap that:
 
-1. installs crash handlers + optional Sentry error reporting via `lib/sentry.js#initSentry` (only when `SENTRY_DSN` / `[sentry] dsn` is set; uses Sentry's uncaught-exception / unhandled-rejection integrations so crashes are reported, then `closeProcess`'s `if (!logger.errorReportingEnabled)` lets Sentry flush+exit),
+1. installs crash handlers via `lib/close-process.js#installCrashHandlers` (shared with `server.js`) plus optional Sentry error reporting via `lib/sentry.js#initSentry` (only when `SENTRY_DSN` / `[sentry] dsn` is set). **`closeProcess` owns the exit unconditionally**; when a reporter is active it waits out a short flush window (`FLUSH_GRACE`) first, and Sentry's integrations only capture + flush. Nothing may delegate the exit to Sentry: `onUncaughtExceptionIntegration` returns early in a worker thread and stands down whenever another `uncaughtException` listener exists (`lib/logger.js` registers one), so a delegated exit never happens and the worker is left running with `closing` latched - deaf to SIGTERM and to every later crash,
 2. uses Node `cluster` to fork `config[type].workers` processes (or runs in-thread when `workers === 1` and no user/group drop is configured),
 3. dynamically `require`s the implementation: ``require(`../lib/${type}-server.js`)`` (or `-worker.js` for `health`) and calls it,
 4. drops privileges via `config.process.user`/`group` after ports are bound.
@@ -61,6 +61,7 @@ This is the heart of the system and is non-obvious:
 - A record's public **ID is `base64url(name \x01 TYPE \x01 hid)`** (`getFullId`/`parseFullId`); `hid` is a `nanoid()`. IDs are opaque and stable only while domain+type are unchanged (an `update` that changes either deletes and re-adds, producing a new ID).
 - **Wildcards** are single-label: a record stored under subdomain `*.foo` matches `anything.foo.<zone>` only (`resolve` retries with the last label replaced by `*`).
 - **Read/write split**: reads go to `db.redisRead`, writes to `db.redisWrite` (configurable as separate master/replica URLs). The health-check Lua script `lib/lua/health.lua` is registered as a custom command `nextHealth` on the write client.
+- **Connection options** (`lib/db.js`): every client, including the one `ioredfour` builds with `duplicate()` for the lock, sets `maxRetriesPerRequest: null`. The ioredis default (20) flushes the whole queue with a `MaxRetriesPerRequestError` after ~13s of downtime, and some of those commands belong to the libraries (ioredfour's constructor `SUBSCRIBE`, ioredis' reconnect `SELECT`/`SUBSCRIBE`) and carry no rejection handler - so a Redis blip crashed every worker at once. The trade-off is an offline queue that grows for the length of an outage. `createClient` also attaches an `error` listener (and wraps `duplicate()` to do the same), because with none ioredis prints raw stack traces to stderr.
 
 ### DNS request handling (`lib/dns-handler.js` + custom servers)
 
@@ -88,7 +89,7 @@ The query-time path is `lib/dns-handler.js#signResponse` (DO queries only): it s
 
 ### Testability seams
 
-Production code exposes hooks used only by tests: `lib/api-server.js` exports `createServer()` (build the Hapi server without `start()`, for `server.inject()`); `lib/dns-server.js`'s `init()` awaits binding and returns `{ udpServer, tcpServer }`, and also attaches `.testables` (`parseEdns`, `finalizeResponse`); `lib/dns-handler.js` (`signResponse`, `bitmapTypeNums`, `processQuestion`, ...), `lib/certs.js`, and `lib/dnssec.js` attach a `.testables` object. `lib/dnssec-wire.js` is pure and is tested directly.
+Production code exposes hooks used only by tests: `lib/api-server.js` exports `createServer()` (build the Hapi server without `start()`, for `server.inject()`); `lib/dns-server.js`'s `init()` awaits binding and returns `{ udpServer, tcpServer }`, and also attaches `.testables` (`parseEdns`, `finalizeResponse`); `lib/dns-handler.js` (`signResponse`, `bitmapTypeNums`, `processQuestion`, ...), `lib/certs.js`, `lib/dnssec.js`, and `lib/public-server.js` (`storeTlsTicket`, `loadTlsTicket`) attach a `.testables` object. `lib/dnssec-wire.js` is pure and is tested directly.
 
 ## CI / release
 
