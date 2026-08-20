@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.2](https://github.com/postalsys/pending-dns/compare/v1.4.1...v1.4.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* keep the Redis password out of the log ([44a4399](https://github.com/postalsys/pending-dns/commit/44a4399e41c8cc08b6b5c71c558fd2394864c71a))
+* refresh TLS session tickets on the write client ([1920ceb](https://github.com/postalsys/pending-dns/commit/1920ceb193dd5d3b8d9b898a0c6c18dc8d00c13b))
+* stop buffering TCP DNS input after a query is handed off ([ce64999](https://github.com/postalsys/pending-dns/commit/ce649999e9c9f046053c91b78a4dd35d3814bb27))
+* survive a Redis outage instead of wedging every worker ([a1d33b6](https://github.com/postalsys/pending-dns/commit/a1d33b6d0d7d19d04957bbdf0a729100c81b137a))
+
 ## [1.4.1](https://github.com/postalsys/pending-dns/compare/v1.4.0...v1.4.1) (2026-06-20)
 
 

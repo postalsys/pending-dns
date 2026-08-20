@@ -1,6 +1,6 @@
 {
     "name": "pending-dns",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "description": "Lightweight API driven DNS server",
     "productTitle": "PendingDNS",
     "main": "index.js",
