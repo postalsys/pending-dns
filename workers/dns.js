@@ -5,37 +5,11 @@
 const cluster = require('cluster');
 const logger = require('../lib/logger').child({ component: 'dns-worker' });
 const config = require('wild-config');
+const { installCrashHandlers } = require('../lib/close-process');
 
 const workerName = 'dns';
 
-let closing = false;
-const closeProcess = (code, errType, err) => {
-    if (closing) {
-        return;
-    }
-    closing = true;
-
-    if (!code) {
-        return setTimeout(() => {
-            process.exit(code);
-        }, 10);
-    }
-
-    logger.fatal({
-        msg: errType,
-        _msg: errType,
-        err
-    });
-
-    if (!logger.errorReportingEnabled) {
-        setTimeout(() => process.exit(code), 10);
-    }
-};
-
-process.on('uncaughtException', err => closeProcess(1, 'uncaughtException', err));
-process.on('unhandledRejection', err => closeProcess(2, 'unhandledRejection', err));
-process.on('SIGTERM', () => closeProcess(0));
-process.on('SIGINT', () => closeProcess(0));
+const { closeProcess, isClosing } = installCrashHandlers(logger);
 
 require('../lib/sentry').initSentry(workerName);
 
@@ -66,7 +40,7 @@ if (cluster.isMaster) {
         run();
     } else {
         const fork = () => {
-            if (closing) {
+            if (isClosing()) {
                 return;
             }
             let worker = cluster.fork();
@@ -80,7 +54,7 @@ if (cluster.isMaster) {
         }
 
         cluster.on('exit', (worker, code, signal) => {
-            if (closing) {
+            if (isClosing()) {
                 return;
             }
             logger.warn({ msg: 'Worker died', workerName, worker: worker.process.pid, code, signal });

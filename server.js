@@ -9,6 +9,7 @@ const logger = require('./lib/logger').child({ component: 'server' });
 const pathlib = require('path');
 const { Worker, SHARE_ENV } = require('worker_threads');
 const { isemail } = require('./lib/tools');
+const { installCrashHandlers } = require('./lib/close-process');
 
 if (!config.acme || !isemail(config.acme.email)) {
     console.error('"acme.email" configuration value is not set or is not a valid email address');
@@ -17,12 +18,12 @@ if (!config.acme || !isemail(config.acme.email)) {
 
 require('./lib/sentry').initSentry('main');
 
-let closing = false;
+const { isClosing } = installCrashHandlers(logger);
 
 let workers = new Map();
 
 let spawnWorker = type => {
-    if (closing) {
+    if (isClosing()) {
         return;
     }
 
@@ -40,7 +41,7 @@ let spawnWorker = type => {
     worker.on('exit', exitCode => {
         workers.get(type).delete(worker);
 
-        if (closing) {
+        if (isClosing()) {
             return;
         }
 
@@ -68,34 +69,3 @@ if (config.public.enabled) {
 if (config.health.enabled) {
     spawnWorker('health');
 }
-
-const closeProcess = (code, errType, err) => {
-    if (closing) {
-        return;
-    }
-    closing = true;
-
-    if (!code) {
-        return setTimeout(() => {
-            process.exit(code);
-        }, 10);
-    }
-
-    logger.fatal({
-        msg: errType,
-        _msg: errType,
-        err
-    });
-
-    if (!logger.errorReportingEnabled) {
-        // No external reporter is handling the crash, so exit here and let the
-        // supervisor restart us. When Sentry is enabled its crash integration
-        // captures, flushes and exits instead.
-        setTimeout(() => process.exit(code), 10);
-    }
-};
-
-process.on('uncaughtException', err => closeProcess(1, 'uncaughtException', err));
-process.on('unhandledRejection', err => closeProcess(2, 'unhandledRejection', err));
-process.on('SIGTERM', () => closeProcess(0));
-process.on('SIGINT', () => closeProcess(0));
