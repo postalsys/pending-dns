@@ -100,6 +100,7 @@ GitHub Actions mirror the `postalsys/emailengine` conventions and run on Node 24
 - Use **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `ci:`, etc.). release-please derives the version bump and `CHANGELOG.md` from these prefixes, so `feat:`/`fix:` commits landing on `master` are what open a release PR.
 - **Do not** add Claude (or any AI assistant) as a co-author / co-contributor in commit messages.
 - For commits that do not change runtime behaviour (docs, comments, CI/workflow tweaks, formatting), append `[skip ci]` to the commit message to avoid triggering the workflows. **Exception:** never add `[skip ci]` to a `feat:`/`fix:` commit — those must run so the release workflow fires.
+- `[skip ci]` is read from the **head commit of the push**, not per commit, so it suppresses the workflows for everything pushed with it. When a batch ends with a docs commit but contains `feat:`/`fix:` commits, either drop the marker or order the docs commit so it is not last.
 - Run `npm run lint` and `npm test` before committing (the test run needs a local Redis; see the Tests section).
 - After pushing, check the workflow runs (`gh run list --branch <branch>`) and report their status. If a run fails for an unrelated infrastructure reason (auth errors, HTTP 403, "account suspended"), check <https://www.githubstatus.com/> for an active incident before assuming the change is at fault.
 
