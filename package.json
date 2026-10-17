@@ -55,7 +55,7 @@
         "@root/csr": "0.8.1",
         "@sentry/node": "10.70.0",
         "dns2": "3.1.1",
-        "handlebars": "4.7.9",
+        "handlebars": "4.7.10",
         "hapi-pino": "13.0.0",
         "hapi-swagger": "17.3.2",
         "http-proxy": "1.18.1",
